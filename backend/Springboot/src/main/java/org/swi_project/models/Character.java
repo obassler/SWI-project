@@ -39,6 +39,7 @@ public class Character {
 
     private String background;
     private String alignment;
+    private Specialization specialization;
 
     @Column(length = 1000)
     private String notes;
