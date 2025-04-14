@@ -1,4 +1,4 @@
-package org.swi-project.controllers;
+package org.swi_project.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

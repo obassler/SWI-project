@@ -8,21 +8,19 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
-public class Spell {
+public class NPC {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
+    private Roles role;
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private SpellType type;
-    private int level;
-
+    private boolean hostile;
 
     @ManyToOne
-    @JoinColumn(name = "character_id")
-    private Character owner;
+    @JoinColumn(name = "location_id")
+    private Location location;
 }

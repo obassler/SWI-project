@@ -4,25 +4,21 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
-public class Spell {
-
+public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
+
+    @Column(length = 1000)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private SpellType type;
-    private int level;
-
-
-    @ManyToOne
-    @JoinColumn(name = "character_id")
-    private Character owner;
+    @ManyToMany
+    private List<Monster> monsters;
 }
