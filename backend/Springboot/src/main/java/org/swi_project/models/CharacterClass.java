@@ -7,7 +7,7 @@ public enum CharacterClass {
     BARBARIAN("Greataxe", "Medium Armor", 0),
     BARD("Rapier", "Light Armor", 3),
     CLERIC("Mace", "Medium Armor", 3),
-    DRUID("Scimitar", "Light Armor", 3),
+    DRUID("Sickle", "Light Armor", 3),
     FIGHTER("Longsword", "Heavy Armor", 0),
     MONK("Quarterstaff", "No Armor", 0),
     PALADIN("Longsword", "Heavy Armor", 2),
