@@ -22,7 +22,7 @@ public class Spell {
     private int level;
 
 
-    @ManyToOne
+    @ManyToMany
     @JoinColumn(name = "character_id")
     private Character owner;
 }

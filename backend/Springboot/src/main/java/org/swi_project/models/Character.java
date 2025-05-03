@@ -44,7 +44,7 @@ public class Character {
     @Column(length = 1000)
     private String notes;
 
-    @OneToMany(mappedBy = "owner")
+    @ManyToMany(mappedBy = "owner")
     private List<Spell> knownSpells = new ArrayList<>();
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
