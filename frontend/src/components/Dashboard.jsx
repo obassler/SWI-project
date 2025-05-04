@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [diceResult, setDiceResult] = useState(null);
   const [diceType, setDiceType] = useState('d20');
+  const [combatMonsters, setCombatMonsters] = useState([]); // Added for combat encounter
 
   useEffect(() => {
     const fetchCharacters = async () => {
@@ -30,6 +31,7 @@ export default function Dashboard() {
         const loc = await api.getLocation();
         setLocation(loc);
         setLocationForm({ name: loc.name, description: loc.description });
+        setCombatMonsters(loc.monsters || []); // Set combat monsters from location
       } catch (err) {
         console.error('Failed to load location', err);
       }
@@ -162,26 +164,14 @@ export default function Dashboard() {
                       </button>
                       <div className="mb-2">
                         <h4 className="text-yellow-200">Monsters</h4>
-                        {location.monsters?.length ? (
+                        {combatMonsters.length ? (
                             <ul className="text-gray-300 list-disc pl-4">
-                              {location.monsters.map(monster => (
+                              {combatMonsters.map(monster => (
                                   <li key={monster.id}>{monster.name}</li>
                               ))}
                             </ul>
                         ) : (
                             <p className="text-gray-400 text-sm">No monsters in this area.</p>
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-yellow-200">NPCs</h4>
-                        {location.npcs?.length ? (
-                            <ul className="text-gray-300 list-disc pl-4">
-                              {location.npcs.map(npc => (
-                                  <li key={npc.id}>{npc.name}</li>
-                              ))}
-                            </ul>
-                        ) : (
-                            <p className="text-gray-400 text-sm">No NPCs in this area.</p>
                         )}
                       </div>
                     </div>
@@ -194,7 +184,17 @@ export default function Dashboard() {
           {/* Combat Encounter */}
           <div className="bg-gray-700 p-4 rounded">
             <h2 className="text-xl text-yellow-200 mb-2">Combat Encounter</h2>
-            <div className="h-32 bg-gray-600 rounded"></div>
+            <div className="h-32 bg-gray-600 rounded">
+              {combatMonsters.length > 0 ? (
+                  <ul className="text-gray-300 list-disc pl-4">
+                    {combatMonsters.map(monster => (
+                        <li key={monster.id}>{monster.name}</li>
+                    ))}
+                  </ul>
+              ) : (
+                  <p className="text-gray-400">No monsters to encounter right now.</p>
+              )}
+            </div>
           </div>
 
           {/* Quick Actions */}

@@ -55,7 +55,7 @@ export default function StoryEditor() {
         setNewQuest('');
       } catch (err) {
         console.error('Failed to add quest:', err);
-        // Optionally show an error message to the user
+        setSavingError('Failed to add quest');
       }
     }
   };
@@ -66,7 +66,7 @@ export default function StoryEditor() {
       setQuests(quests.filter(quest => quest.id !== id));
     } catch (err) {
       console.error('Failed to delete quest:', err);
-      // Optionally show an error message to the user
+      setSavingError('Failed to delete quest');
     }
   };
 
@@ -77,6 +77,7 @@ export default function StoryEditor() {
       <div className="bg-gray-700 p-4 rounded space-y-4">
         <h2 className="text-2xl text-yellow-300">Story Editor</h2>
 
+        {/* Story text */}
         <div>
           <label className="block text-yellow-200 mb-1">Story Text:</label>
           <textarea
@@ -96,6 +97,7 @@ export default function StoryEditor() {
           </div>
         </div>
 
+        {/* Quests Section */}
         <div>
           <h3 className="text-xl text-yellow-200 mb-2">Quests</h3>
           <ul className="list-disc list-inside space-y-1 mb-2">

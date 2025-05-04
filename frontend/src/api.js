@@ -90,5 +90,34 @@ export const api = {
     }),
     deleteQuest: (id) => fetchApi(`/quests/${id}`, {
         method: 'DELETE'
-    })
+    }),
+
+    // Locations
+    getLocations: async () => {
+        const res = await fetch('/api/locations');
+        if (!res.ok) throw new Error('Failed to fetch locations');
+        return res.json();
+    },
+    createLocation: async (location) => {
+        const res = await fetch('/api/locations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(location),
+        });
+        if (!res.ok) throw new Error('Failed to create location');
+        return res.json();
+    },
+    updateLocation: async (id, location) => {
+        const res = await fetch(`/api/locations/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(location),
+        });
+        if (!res.ok) throw new Error('Failed to update location');
+        return res.json();
+    },
+    deleteLocation: async (id) => {
+        const res = await fetch(`/api/locations/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete location');
+    }
 };

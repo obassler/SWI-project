@@ -1,7 +1,7 @@
 import Sidebar from './components/Sidebar';
 import { Routes, Route } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
-import Map from './components/Map';
+import Map from './components/Location';
 import CharacterDetail from './components/CharacterDetail';
 import Items from './components/Items';
 import Bestiary from './components/Bestiary';
