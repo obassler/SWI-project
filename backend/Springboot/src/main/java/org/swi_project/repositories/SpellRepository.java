@@ -5,8 +5,8 @@ import org.swi_project.models.Spell;
 import org.swi_project.models.SpellType;
 import java.util.List;
 
-public interface SpellRepository extends JpaRepository<Spell, Long> {
-    List<Spell> findByOwnerId(Long characterId);
+public interface SpellRepository extends JpaRepository<Spell, Integer> {
+    List<Spell> findByCharactersContaining(Character character);
     List<Spell> findByLevel(int level);
-    List<Spell> findByType(SpellType type);
+    List<Spell> findByType(String type);
 }

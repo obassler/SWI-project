@@ -7,58 +7,67 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity
+@Table(name = "item")
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "Id")
+    private Integer id;
 
+    @Column(name = "Name", nullable = false, length = 25)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    private ItemType type;
-    private String description;
-    private int weight;
-    private int goldValue;
-    private boolean magical;
+    @Column(name = "Type", nullable = false, length = 25)
+    private String type; // Changed from enum to String to match DB
 
-    @Column(length = 500)
+    @Column(name = "Description", nullable = false, length = 200)
+    private String description;
+
+    @Column(name = "Weight", nullable = false)
+    private int weight;
+
+    @Column(name = "GoldValue", nullable = false)
+    private int goldValue;
+
+    @Column(name = "Magic", nullable = false)
+    private boolean magic;
+
+    @Column(name = "MagicalProperties", nullable = false, length = 50)
     private String magicalProperties;
 
-    private boolean equipped;
+    @Column(name = "EquipState", nullable = false)
+    private boolean equipState;
 
+    @Column(name = "DamageType", nullable = false, length = 50)
     private String damageType;
+
+    @Column(name = "DamageRoll", nullable = false, length = 50)
     private String damageRoll;
 
+    @Column(name = "ArmorClass", nullable = false)
     private int armorClass;
 
-    @ManyToOne
-    @JoinColumn(name = "character_id")
-    private Character owner;
-
-
-    @Enumerated(EnumType.STRING)
-    private ItemType itemType;
-
+    // Helper methods
     public boolean isWeapon() {
-        return type == ItemType.WEAPON;
+        return "WEAPON".equals(type);
     }
 
     public boolean isArmor() {
-        return type == ItemType.ARMOR || type == ItemType.SHIELD;
+        return "ARMOR".equals(type) || "SHIELD".equals(type);
     }
 
     public boolean isEquippable() {
-        return isWeapon() || isArmor() || type == ItemType.RING
-                || type == ItemType.AMULET || type == ItemType.CLOTHING;
+        return isWeapon() || isArmor() || "RING".equals(type) || "AMULET".equals(type) || "CLOTHING".equals(type);
     }
+
     public void equip() {
         if (isEquippable()) {
-            this.equipped = true;
+            this.equipState = true;
         }
     }
 
     public void unequip() {
-        this.equipped = false;
+        this.equipState = false;
     }
 
     @Override
@@ -66,11 +75,11 @@ public class Item {
         StringBuilder sb = new StringBuilder();
         sb.append(name);
 
-        if (magical) {
+        if (magic) {
             sb.append(" (Magical)");
         }
 
-        if (equipped) {
+        if (equipState) {
             sb.append(" [Equipped]");
         }
 

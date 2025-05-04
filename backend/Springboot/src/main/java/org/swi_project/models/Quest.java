@@ -4,23 +4,31 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "quest")
 public class Quest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "Id")
+    private Integer id;
 
+    @Column(name = "Title", nullable = false, length = 25)
     private String title;
 
-    @Column(length = 1000)
+    @Column(name = "Description", nullable = false, length = 200)
     private String description;
 
-    private boolean isCompleted;
+    @Column(name = "Type", nullable = false, length = 25)
+    private String type; // Added to match DB
 
-    @ManyToMany
-    private List<Character> participants;
+    @Column(name = "Completion", nullable = false)
+    private boolean completion; // Changed from isCompleted to completion to match DB
+
+    @ManyToMany(mappedBy = "quests")
+    private List<Character> participants = new ArrayList<>();
 }

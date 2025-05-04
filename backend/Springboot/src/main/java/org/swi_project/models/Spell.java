@@ -4,25 +4,31 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "spell")
 public class Spell {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "Id")
+    private Integer id;
 
+    @Column(name = "Name", nullable = false, length = 25)
     private String name;
+
+    @Column(name = "Description", nullable = false, length = 200)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private SpellType type;
+    @Column(name = "Type", nullable = false, length = 25)
+    private String type; // Changed from enum to String to match DB
+
+    @Column(name = "Level", nullable = false)
     private int level;
 
-
-    @ManyToMany
-    @JoinColumn(name = "character_id")
-    private Character owner;
+    @ManyToMany(mappedBy = "spells")
+    private List<Character> characters = new ArrayList<>();
 }
