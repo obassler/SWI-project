@@ -4,6 +4,9 @@ import { api } from '../api';
 
 export default function Dashboard() {
   const [characters, setCharacters] = useState([]);
+  const [location, setLocation] = useState(null);
+  const [editingLocation, setEditingLocation] = useState(false);
+  const [locationForm, setLocationForm] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [diceResult, setDiceResult] = useState(null);
@@ -22,7 +25,18 @@ export default function Dashboard() {
       }
     };
 
+    const fetchLocation = async () => {
+      try {
+        const loc = await api.getLocation();
+        setLocation(loc);
+        setLocationForm({ name: loc.name, description: loc.description });
+      } catch (err) {
+        console.error('Failed to load location', err);
+      }
+    };
+
     fetchCharacters();
+    fetchLocation();
   }, []);
 
   const rollDice = () => {
@@ -31,11 +45,25 @@ export default function Dashboard() {
     setDiceResult(`Rolled a ${diceType}: ${result}`);
   };
 
+  const handleLocationChange = (e) => {
+    setLocationForm({ ...locationForm, [e.target.name]: e.target.value });
+  };
+
+  const saveLocation = async () => {
+    try {
+      const updated = await api.updateLocation(locationForm);
+      setLocation(updated);
+      setEditingLocation(false);
+    } catch (err) {
+      console.error('Failed to update location', err);
+    }
+  };
+
   return (
       <div className="space-y-6">
         <h1 className="text-3xl text-yellow-300">GM Control Panel</h1>
         <section className="grid grid-cols-2 gap-4">
-          {/* Player Characters Section */}
+          {/* Player Characters */}
           <div className="bg-gray-700 p-4 rounded">
             <h2 className="text-xl text-yellow-200 mb-2">Player Characters</h2>
             {loading ? (
@@ -89,19 +117,87 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Current Location Section */}
+          {/* Current Location */}
           <div className="bg-gray-700 p-4 rounded">
             <h2 className="text-xl text-yellow-200 mb-2">Current Location</h2>
-            <div className="h-32 bg-gray-600 rounded"></div>
+            {location ? (
+                editingLocation ? (
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-sm text-gray-300">Name</label>
+                        <input
+                            name="name"
+                            value={locationForm.name}
+                            onChange={handleLocationChange}
+                            className="w-full p-1 rounded bg-gray-600 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300">Description</label>
+                        <textarea
+                            name="description"
+                            value={locationForm.description}
+                            onChange={handleLocationChange}
+                            className="w-full p-1 rounded bg-gray-600 text-white"
+                            rows={3}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={saveLocation} className="bg-green-600 px-2 py-1 rounded hover:bg-green-700">
+                          Save
+                        </button>
+                        <button onClick={() => setEditingLocation(false)} className="bg-gray-500 px-2 py-1 rounded hover:bg-gray-600">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                ) : (
+                    <div>
+                      <div className="mb-2">
+                        <h3 className="text-lg text-yellow-100">{location.name}</h3>
+                        <p className="text-gray-300">{location.description}</p>
+                      </div>
+                      <button onClick={() => setEditingLocation(true)} className="text-blue-400 hover:underline mb-2">
+                        Edit Location
+                      </button>
+                      <div className="mb-2">
+                        <h4 className="text-yellow-200">Monsters</h4>
+                        {location.monsters?.length ? (
+                            <ul className="text-gray-300 list-disc pl-4">
+                              {location.monsters.map(monster => (
+                                  <li key={monster.id}>{monster.name}</li>
+                              ))}
+                            </ul>
+                        ) : (
+                            <p className="text-gray-400 text-sm">No monsters in this area.</p>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-yellow-200">NPCs</h4>
+                        {location.npcs?.length ? (
+                            <ul className="text-gray-300 list-disc pl-4">
+                              {location.npcs.map(npc => (
+                                  <li key={npc.id}>{npc.name}</li>
+                              ))}
+                            </ul>
+                        ) : (
+                            <p className="text-gray-400 text-sm">No NPCs in this area.</p>
+                        )}
+                      </div>
+                    </div>
+                )
+            ) : (
+                <p className="text-yellow-300">Loading location...</p>
+            )}
           </div>
 
-          {/* Combat Encounter Section */}
+          {/* Combat Encounter */}
           <div className="bg-gray-700 p-4 rounded">
             <h2 className="text-xl text-yellow-200 mb-2">Combat Encounter</h2>
             <div className="h-32 bg-gray-600 rounded"></div>
           </div>
 
-          {/* Quick Actions Section */}
+          {/* Quick Actions */}
           <div className="bg-gray-700 p-4 rounded">
             <h2 className="text-xl text-yellow-200 mb-2">Quick Actions</h2>
             <div className="mb-2">
