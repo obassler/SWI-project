@@ -22,7 +22,10 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/characters/**"),
                                 new AntPathRequestMatcher("/api/npcs/**"),
                                 new AntPathRequestMatcher("/api/quests/**"),
-                                new AntPathRequestMatcher("/api/items/**")
+                                new AntPathRequestMatcher("/api/items/**"),
+                                new AntPathRequestMatcher("/api/monsters/**"),
+                                new AntPathRequestMatcher("/api/locations/**"),
+                                new AntPathRequestMatcher("/api/spells/**")
                         ).permitAll()
                         .anyRequest().authenticated()
                 );

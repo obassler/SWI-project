@@ -90,5 +90,8 @@ export const api = {
     }),
     deleteQuest: (id) => fetchApi(`/quests/${id}`, {
         method: 'DELETE'
-    })
+    }),
+
+    // Location (Newly Added)
+    getLocation: () => fetchApi('/location') // Assuming '/location' is the endpoint for location data
 };

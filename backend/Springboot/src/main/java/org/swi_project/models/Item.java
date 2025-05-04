@@ -41,7 +41,7 @@ public class Item {
     @Column(name = "DamageType", nullable = false, length = 50)
     private String damageType;
 
-    @Column(name = "DamageRoll", nullable = false, length = 50)
+    @Column(name = "DamageRoll", nullable = true, length = 50)
     private String damageRoll;
 
     @Column(name = "ArmorClass", nullable = false)
