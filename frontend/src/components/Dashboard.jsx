@@ -28,7 +28,8 @@ export default function Dashboard() {
 
     const fetchLocation = async () => {
       try {
-        const loc = await api.getLocation();
+        const locations = await api.getLocation();
+        const loc = locations[0]; // Assuming the first location is the one we need
         setLocation(loc);
         setLocationForm({ name: loc.name, description: loc.description });
         setCombatMonsters(loc.monsters || []); // Set combat monsters from location
@@ -76,7 +77,7 @@ export default function Dashboard() {
                 <p className="text-gray-300">No characters available.</p>
             ) : (
                 <ul className="space-y-1 mb-2">
-                  {characters.map(char => (
+                  {characters.slice(0, 5).map((char) => (  // Display first 5 characters
                       <li key={char.id} className="bg-gray-600 p-1 rounded">
                         <Link
                             to={`/characters/${char.id}`}
@@ -93,9 +94,7 @@ export default function Dashboard() {
                         <span className="text-yellow-300">
                           HP: {char.currentHp}/{char.maxHp}
                         </span>
-                              <span className="ml-2 text-gray-300">
-                          {char.race?.name}
-                        </span>
+                              <span className="ml-2 text-gray-300">{char.race?.name}</span>
                             </div>
                           </div>
                           <div className="text-xs mt-1 flex space-x-2 text-gray-300">
@@ -111,10 +110,7 @@ export default function Dashboard() {
                   ))}
                 </ul>
             )}
-            <Link
-                to="/characters/new"
-                className="text-blue-400 hover:underline"
-            >
+            <Link to="/characters/new" className="text-blue-400 hover:underline">
               Create New Character
             </Link>
           </div>
@@ -145,10 +141,16 @@ export default function Dashboard() {
                         />
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={saveLocation} className="bg-green-600 px-2 py-1 rounded hover:bg-green-700">
+                        <button
+                            onClick={saveLocation}
+                            className="bg-green-600 px-2 py-1 rounded hover:bg-green-700"
+                        >
                           Save
                         </button>
-                        <button onClick={() => setEditingLocation(false)} className="bg-gray-500 px-2 py-1 rounded hover:bg-gray-600">
+                        <button
+                            onClick={() => setEditingLocation(false)}
+                            className="bg-gray-500 px-2 py-1 rounded hover:bg-gray-600"
+                        >
                           Cancel
                         </button>
                       </div>
@@ -159,14 +161,17 @@ export default function Dashboard() {
                         <h3 className="text-lg text-yellow-100">{location.name}</h3>
                         <p className="text-gray-300">{location.description}</p>
                       </div>
-                      <button onClick={() => setEditingLocation(true)} className="text-blue-400 hover:underline mb-2">
+                      <button
+                          onClick={() => setEditingLocation(true)}
+                          className="text-blue-400 hover:underline mb-2"
+                      >
                         Edit Location
                       </button>
                       <div className="mb-2">
                         <h4 className="text-yellow-200">Monsters</h4>
                         {combatMonsters.length ? (
                             <ul className="text-gray-300 list-disc pl-4">
-                              {combatMonsters.map(monster => (
+                              {combatMonsters.map((monster) => (
                                   <li key={monster.id}>{monster.name}</li>
                               ))}
                             </ul>
@@ -187,7 +192,7 @@ export default function Dashboard() {
             <div className="h-32 bg-gray-600 rounded">
               {combatMonsters.length > 0 ? (
                   <ul className="text-gray-300 list-disc pl-4">
-                    {combatMonsters.map(monster => (
+                    {combatMonsters.map((monster) => (
                         <li key={monster.id}>{monster.name}</li>
                     ))}
                   </ul>
@@ -204,7 +209,7 @@ export default function Dashboard() {
               <label className="text-gray-300 mr-2">Dice Type:</label>
               <select
                   value={diceType}
-                  onChange={e => setDiceType(e.target.value)}
+                  onChange={(e) => setDiceType(e.target.value)}
                   className="bg-gray-600 text-white p-1 rounded"
               >
                 <option value="d4">d4</option>
@@ -224,9 +229,7 @@ export default function Dashboard() {
             <button className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700">
               Adjust HP
             </button>
-            {diceResult && (
-                <p className="mt-2 text-green-300">{diceResult}</p>
-            )}
+            {diceResult && <p className="mt-2 text-green-300">{diceResult}</p>}
           </div>
         </section>
       </div>

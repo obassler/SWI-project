@@ -125,210 +125,108 @@ export default function Items() {
     if (error) return <ErrorMessage message={error} onRetry={fetchItems} />;
 
     return (
-        <div className="bg-gray-700 p-4 rounded space-y-4">
-            <h2 className="text-2xl text-yellow-300">Items</h2>
+        <div className="container mx-auto px-4">
+            <div className="bg-gray-700 p-4 rounded space-y-4">
+                <h2 className="text-2xl text-yellow-300">Items</h2>
 
-            {/* Add New Item */}
-            <div className="flex gap-2 items-end">
-                <div>
-                    <label className="block text-gray-300 text-sm">Name</label>
-                    <input
-                        name="name"
-                        value={newItem.name}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
+                {/* Add New Item */}
+                <div className="flex flex-wrap gap-4 items-end">
+                    {[
+                        { label: 'Name', name: 'name' },
+                        { label: 'Type', name: 'type' },
+                        { label: 'Description', name: 'description' },
+                        { label: 'Weight', name: 'weight', type: 'number' },
+                        { label: 'Gold Value', name: 'goldValue', type: 'number' },
+                        { label: 'Magical Properties', name: 'magicalProperties' },
+                        { label: 'Damage Type', name: 'damageType' },
+                        { label: 'Damage Roll', name: 'damageRoll' },
+                        { label: 'Armor Class', name: 'armorClass', type: 'number' }
+                    ].map(({ label, name, type = 'text' }) => (
+                        <div key={name} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
+                            <label className="block text-gray-300 text-sm">{label}</label>
+                            <input
+                                name={name}
+                                value={newItem[name]}
+                                onChange={handleInputChange}
+                                type={type}
+                                className="w-full p-1 rounded bg-gray-600 text-white"
+                            />
+                        </div>
+                    ))}
+                    <div className="w-full sm:w-auto">
+                        <button
+                            onClick={addItem}
+                            className="bg-green-600 px-4 py-2 rounded hover:bg-green-700 mt-2"
+                        >
+                            Add Item
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Type</label>
-                    <input
-                        name="type"
-                        value={newItem.type}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Description</label>
-                    <input
-                        name="description"
-                        value={newItem.description}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Weight</label>
-                    <input
-                        name="weight"
-                        value={newItem.weight}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                        type="number"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Gold Value</label>
-                    <input
-                        name="goldValue"
-                        value={newItem.goldValue}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                        type="number"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Magical Properties</label>
-                    <input
-                        name="magicalProperties"
-                        value={newItem.magicalProperties}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Damage Type</label>
-                    <input
-                        name="damageType"
-                        value={newItem.damageType}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Damage Roll</label>
-                    <input
-                        name="damageRoll"
-                        value={newItem.damageRoll}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                    />
-                </div>
-                <div>
-                    <label className="block text-gray-300 text-sm">Armor Class</label>
-                    <input
-                        name="armorClass"
-                        value={newItem.armorClass}
-                        onChange={handleInputChange}
-                        className="p-1 rounded bg-gray-600 text-white"
-                        type="number"
-                    />
-                </div>
-                <button
-                    onClick={addItem}
-                    className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
-                >
-                    Add Item
-                </button>
-            </div>
 
-            {/* Item List */}
-            {items.length === 0 ? (
-                <p className="text-gray-300">No items available.</p>
-            ) : (
-                <ul className="grid grid-cols-2 gap-4">
-                    {items.map(item => (
-                        <li key={item.id} className="bg-gray-600 p-2 rounded">
-                            {editingItemId === item.id ? (
-                                <div className="space-y-1">
-                                    <input
-                                        name="name"
-                                        value={editForm.name}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="type"
-                                        value={editForm.type}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="description"
-                                        value={editForm.description}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="weight"
-                                        value={editForm.weight}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="goldValue"
-                                        value={editForm.goldValue}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="magicalProperties"
-                                        value={editForm.magicalProperties}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="damageType"
-                                        value={editForm.damageType}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <input
-                                        name="damageRoll"
-                                        value={editForm.damageRoll}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-
-                                    ChatGPT řekl:
-
-                                    <input
-                                        name="armorClass"
-                                        value={editForm.armorClass}
-                                        onChange={handleEditChange}
-                                        className="w-full p-1 bg-gray-700 text-white rounded"
-                                    />
-                                    <div className="flex gap-2 mt-2">
+                {/* Item List */}
+                {items.length === 0 ? (
+                    <p className="text-gray-300">No items available.</p>
+                ) : (
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {items.map(item => (
+                            <li key={item.id} className="bg-gray-600 p-2 rounded">
+                                {editingItemId === item.id ? (
+                                    <div className="space-y-1">
+                                        {[
+                                            'name', 'type', 'description', 'weight',
+                                            'goldValue', 'magicalProperties',
+                                            'damageType', 'damageRoll', 'armorClass'
+                                        ].map(field => (
+                                            <input
+                                                key={field}
+                                                name={field}
+                                                value={editForm[field]}
+                                                onChange={handleEditChange}
+                                                className="w-full p-1 bg-gray-700 text-white rounded"
+                                            />
+                                        ))}
+                                        <div className="flex gap-2 mt-2">
+                                            <button
+                                                onClick={saveEdit}
+                                                className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
+                                            >
+                                                Save
+                                            </button>
+                                            <button
+                                                onClick={cancelEditing}
+                                                className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <h3 className="text-yellow-400">{item.name}</h3>
+                                        <p className="text-gray-300">Type: {item.type}</p>
+                                        <p className="text-gray-400">{item.description}</p>
+                                        <p className="text-gray-500">Weight: {item.weight}</p>
+                                        <p className="text-gray-500">Gold: {item.goldValue}</p>
+                                        {item.magic && <p className="text-gray-400">Magical</p>}
                                         <button
-                                            onClick={saveEdit}
+                                            onClick={() => startEditing(item)}
                                             className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
                                         >
-                                            Save
+                                            Edit
                                         </button>
                                         <button
-                                            onClick={cancelEditing}
+                                            onClick={() => deleteItem(item.id)}
                                             className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
                                         >
-                                            Cancel
+                                            Delete
                                         </button>
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-1">
-                                    <h3 className="text-yellow-400">{item.name}</h3>
-                                    <p className="text-gray-300">Type: {item.type}</p>
-                                    <p className="text-gray-400">{item.description}</p>
-                                    <p className="text-gray-500">Weight: {item.weight}</p>
-                                    <p className="text-gray-500">Gold: {item.goldValue}</p>
-                                    {item.magic && <p className="text-gray-400">Magical</p>}
-                                    <button
-                                        onClick={() => startEditing(item)}
-                                        className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => deleteItem(item.id)}
-                                        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
         </div>
     );
 }

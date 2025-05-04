@@ -9,57 +9,36 @@ import java.util.Optional;
 
 import org.swi_project.models.Location;
 import org.swi_project.repositories.LocationRepository;
+import org.swi_project.services.LocationService;
 
 @RestController
 @RequestMapping("/api/locations")
 public class LocationController {
 
-    private final LocationRepository locationRepository;
-
     @Autowired
-    public LocationController(LocationRepository locationRepository) {
-        this.locationRepository = locationRepository;
+    private LocationService locationService;
+
+    @PostMapping("/{locationId}/monsters/{monsterId}")
+    public ResponseEntity<Location> addMonsterToLocation(@PathVariable int locationId, @PathVariable int monsterId) {
+        Location updatedLocation = locationService.addMonsterToLocation(locationId, monsterId);
+        return ResponseEntity.ok(updatedLocation);
     }
 
-    @GetMapping
-    public List<Location> getAllLocations() {
-        return locationRepository.findAll();
+    @DeleteMapping("/{locationId}/monsters/{monsterId}")
+    public ResponseEntity<Location> removeMonsterFromLocation(@PathVariable int locationId, @PathVariable int monsterId) {
+        Location updatedLocation = locationService.removeMonsterFromLocation(locationId, monsterId);
+        return ResponseEntity.ok(updatedLocation);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Location> getLocationById(@PathVariable int id) {
-        Optional<Location> location = locationRepository.findById(id);
-        return location.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PostMapping("/{locationId}/npcs/{npcId}")
+    public ResponseEntity<Location> addNpcToLocation(@PathVariable int locationId, @PathVariable int npcId) {
+        Location updatedLocation = locationService.addNpcToLocation(locationId, npcId);
+        return ResponseEntity.ok(updatedLocation);
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Location createLocation(@RequestBody Location location) {
-        return locationRepository.save(location);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Location> updateLocation(@PathVariable int id, @RequestBody Location locationDetails) {
-        Optional<Location> location = locationRepository.findById(id);
-        if (location.isPresent()) {
-            Location existingLocation = location.get();
-            existingLocation.setName(locationDetails.getName());
-
-            return ResponseEntity.ok(locationRepository.save(existingLocation));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLocation(@PathVariable int id) {
-        Optional<Location> location = locationRepository.findById(id);
-        if (location.isPresent()) {
-            locationRepository.delete(location.get());
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{locationId}/npcs/{npcId}")
+    public ResponseEntity<Location> removeNpcFromLocation(@PathVariable int locationId, @PathVariable int npcId) {
+        Location updatedLocation = locationService.removeNpcFromLocation(locationId, npcId);
+        return ResponseEntity.ok(updatedLocation);
     }
 }

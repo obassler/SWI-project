@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL ||
+    process.env?.REACT_APP_API_BASE_URL ||
+    'http://localhost:8080/api';
 
 async function fetchApi(endpoint, options = {}) {
     try {
@@ -53,6 +55,21 @@ export const api = {
         method: 'DELETE'
     }),
 
+    // NPCs
+    getNpcs: () => fetchApi('/npcs'),
+    getNpc: (id) => fetchApi(`/npcs/${id}`),
+    createNpc: (data) => fetchApi('/npcs', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    updateNpc: (id, data) => fetchApi(`/npcs/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+    deleteNpc: (id) => fetchApi(`/npcs/${id}`, {
+        method: 'DELETE'
+    }),
+
     // Items
     getItems: () => fetchApi('/items'),
     getItem: (id) => fetchApi(`/items/${id}`),
@@ -68,7 +85,7 @@ export const api = {
         method: 'DELETE',
     }),
 
-    // Map / Tokens
+    // Map Tokens
     getMapTokens: () => fetchApi('/map/tokens'),
     updateToken: (id, position) => fetchApi(`/map/tokens/${id}`, {
         method: 'PUT',
@@ -93,31 +110,16 @@ export const api = {
     }),
 
     // Locations
-    getLocations: async () => {
-        const res = await fetch('/api/locations');
-        if (!res.ok) throw new Error('Failed to fetch locations');
-        return res.json();
-    },
-    createLocation: async (location) => {
-        const res = await fetch('/api/locations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(location),
-        });
-        if (!res.ok) throw new Error('Failed to create location');
-        return res.json();
-    },
-    updateLocation: async (id, location) => {
-        const res = await fetch(`/api/locations/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(location),
-        });
-        if (!res.ok) throw new Error('Failed to update location');
-        return res.json();
-    },
-    deleteLocation: async (id) => {
-        const res = await fetch(`/api/locations/${id}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error('Failed to delete location');
-    }
+    getLocation: () => fetchApi('/locations'),
+    createLocation: (location) => fetchApi('/locations', {
+        method: 'POST',
+        body: JSON.stringify(location),
+    }),
+    updateLocation: (id, location) => fetchApi(`/locations/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(location),
+    }),
+    deleteLocation: (id) => fetchApi(`/locations/${id}`, {
+        method: 'DELETE'
+    })
 };

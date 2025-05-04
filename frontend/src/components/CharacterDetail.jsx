@@ -14,10 +14,17 @@ export default function CharacterDetail() {
         setLoading(true);
         setError(null);
         try {
+            console.log('Fetching character with ID:', id);
             const data = await api.getCharacter(id);
-            // Ensure we have all required fields with defaults
+            console.log('Character data:', data);
+
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid character data');
+            }
+
             const processedCharacter = {
                 ...data,
+                name: data.name || 'Unnamed',
                 currentHp: data.currentHp ?? 0,
                 maxHp: data.maxHp ?? 0,
                 strength: data.strength ?? 10,
@@ -27,21 +34,22 @@ export default function CharacterDetail() {
                 wisdom: data.wisdom ?? 10,
                 charisma: data.charisma ?? 10,
                 status: data.status || 'Healthy',
-                items: data.items || [],
-                spells: data.spells || [],
-                race: data.race || { name: 'Unknown' },
-                characterClass: data.characterClass || { name: 'Unknown' },
+                items: Array.isArray(data.items) ? data.items : [],
+                spells: Array.isArray(data.spells) ? data.spells : [],
+                race: data.race?.name ? data.race : { name: 'Unknown' },
+                characterClass: data.characterClass?.name ? data.characterClass : { name: 'Unknown' },
                 background: data.background || '',
                 alignment: data.alignment || '',
                 specialization: data.specialization || '',
                 notes: data.notes || ''
             };
+
             setCharacter(processedCharacter);
-            setLoading(false);
         } catch (err) {
+            console.error('Error fetching character:', err);
             setError('Failed to load character');
+        } finally {
             setLoading(false);
-            console.error(err);
         }
     };
 
@@ -51,11 +59,10 @@ export default function CharacterDetail() {
 
     if (loading) return <LoadingSpinner message="Loading character..." />;
     if (error) return <ErrorMessage message={error} onRetry={fetchCharacter} />;
-    if (!character) return <p className="text-red-500">Character not found.</p>;
+    if (!character || !character.name) return <p className="text-red-500">Character not found or invalid data.</p>;
 
     return (
         <div className="bg-gray-800 p-6 rounded-lg max-w-6xl mx-auto">
-            {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-yellow-400">{character.name}</h1>
@@ -77,9 +84,8 @@ export default function CharacterDetail() {
                 </div>
             </div>
 
-            {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                {/* Abilities Column */}
+                {/* Abilities */}
                 <div className="bg-gray-700 p-4 rounded-lg">
                     <h2 className="text-xl font-semibold text-yellow-300 mb-4">Abilities</h2>
                     <div className="grid grid-cols-3 gap-3">
@@ -99,7 +105,7 @@ export default function CharacterDetail() {
                     </div>
                 </div>
 
-                {/* Character Details Column */}
+                {/* Details */}
                 <div className="bg-gray-700 p-4 rounded-lg">
                     <h2 className="text-xl font-semibold text-yellow-300 mb-4">Character Details</h2>
                     <div className="space-y-3">
@@ -118,7 +124,7 @@ export default function CharacterDetail() {
                     </div>
                 </div>
 
-                {/* Notes Column */}
+                {/* Notes */}
                 <div className="bg-gray-700 p-4 rounded-lg lg:col-span-1">
                     <h2 className="text-xl font-semibold text-yellow-300 mb-4">Notes</h2>
                     <div className="bg-gray-800 p-3 rounded whitespace-pre-line min-h-[150px]">
@@ -127,9 +133,8 @@ export default function CharacterDetail() {
                 </div>
             </div>
 
-            {/* Bottom Sections */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Inventory Section */}
+                {/* Inventory */}
                 <div className="bg-gray-700 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold text-yellow-300">Inventory</h2>
@@ -153,7 +158,7 @@ export default function CharacterDetail() {
                     )}
                 </div>
 
-                {/* Spells Section */}
+                {/* Spells */}
                 <div className="bg-gray-700 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-semibold text-yellow-300">Spells</h2>
@@ -175,17 +180,17 @@ export default function CharacterDetail() {
                 </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
-                <Link 
-                    to="/" 
+                <Link
+                    to="/"
                     className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-center transition-colors"
                 >
                     ← Back to Dashboard
                 </Link>
                 <div className="flex gap-3">
-                    <Link 
-                        to={`/characters/${id}/edit`} 
+                    <Link
+                        to={`/characters/${id}/edit`}
                         className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-center transition-colors"
                     >
                         Edit Character
