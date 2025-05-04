@@ -31,7 +31,7 @@ public class QuestController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Quest> getQuestById(@PathVariable Long id) {
+    public ResponseEntity<Quest> getQuestById(@PathVariable int id) {
         Optional<Quest> quest = questRepository.findById(id);
         return quest.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -44,13 +44,13 @@ public class QuestController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Quest> updateQuest(@PathVariable Long id, @RequestBody Quest questDetails) {
+    public ResponseEntity<Quest> updateQuest(@PathVariable int id, @RequestBody Quest questDetails) {
         Optional<Quest> quest = questRepository.findById(id);
         if (quest.isPresent()) {
             Quest existingQuest = quest.get();
             existingQuest.setTitle(questDetails.getTitle());
             existingQuest.setDescription(questDetails.getDescription());
-            existingQuest.setCompleted(questDetails.isCompleted());
+            existingQuest.setCompletion(questDetails.isCompletion());
             return ResponseEntity.ok(questRepository.save(existingQuest));
         } else {
             return ResponseEntity.notFound().build();
@@ -58,7 +58,7 @@ public class QuestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteQuest(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteQuest(@PathVariable int id) {
         Optional<Quest> quest = questRepository.findById(id);
         if (quest.isPresent()) {
             questRepository.delete(quest.get());
@@ -68,7 +68,7 @@ public class QuestController {
         }
     }
     @GetMapping("/{questId}/participants")
-    public ResponseEntity<List<Character>> getQuestParticipants(@PathVariable Long questId) {
+    public ResponseEntity<List<Character>> getQuestParticipants(@PathVariable int questId) {
         Optional<Quest> quest = questRepository.findById(questId);
         return quest.map(q -> ResponseEntity.ok(q.getParticipants()))
                 .orElse(ResponseEntity.notFound().build());
@@ -76,8 +76,8 @@ public class QuestController {
 
     @PostMapping("/{questId}/participants/{characterId}")
     public ResponseEntity<Quest> addParticipantToQuest(
-            @PathVariable Long questId,
-            @PathVariable Long characterId) {
+            @PathVariable int questId,
+            @PathVariable int characterId) {
         Optional<Quest> questOpt = questRepository.findById(questId);
         Optional<Character> characterOpt = characterRepository.findById(characterId);
 
@@ -96,8 +96,8 @@ public class QuestController {
 
     @DeleteMapping("/{questId}/participants/{characterId}")
     public ResponseEntity<Quest> removeParticipantFromQuest(
-            @PathVariable Long questId,
-            @PathVariable Long characterId) {
+            @PathVariable int questId,
+            @PathVariable int characterId) {
         Optional<Quest> questOpt = questRepository.findById(questId);
         Optional<Character> characterOpt = characterRepository.findById(characterId);
 
@@ -113,11 +113,11 @@ public class QuestController {
         return ResponseEntity.notFound().build();
     }
     @PutMapping("/{questId}/complete")
-    public ResponseEntity<Quest> completeQuest(@PathVariable Long questId) {
+    public ResponseEntity<Quest> completeQuest(@PathVariable int questId) {
         Optional<Quest> questOpt = questRepository.findById(questId);
         if (questOpt.isPresent()) {
             Quest quest = questOpt.get();
-            quest.setCompleted(true);
+            quest.setCompletion(true);
             return ResponseEntity.ok(questRepository.save(quest));
         }
         return ResponseEntity.notFound().build();

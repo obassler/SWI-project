@@ -101,4 +101,14 @@ public class Character {
             inverseJoinColumns = @JoinColumn(name = "Monster_Id")
     )
     private List<Monster> ownedMonsters = new ArrayList<>();
+
+    public void addSpell(Spell spell) {
+        this.spells.add(spell);
+        spell.getCharacters().add(this);
+    }
+
+    public void removeSpell(Spell spell) {
+        this.spells.remove(spell);
+        spell.getCharacters().remove(this);
+    }
 }

@@ -24,10 +24,10 @@ public class Quest {
     private String description;
 
     @Column(name = "Type", nullable = false, length = 25)
-    private String type; // Added to match DB
+    private String type;
 
     @Column(name = "Completion", nullable = false)
-    private boolean completion; // Changed from isCompleted to completion to match DB
+    private boolean completion;
 
     @ManyToMany(mappedBy = "quests")
     private List<Character> participants = new ArrayList<>();

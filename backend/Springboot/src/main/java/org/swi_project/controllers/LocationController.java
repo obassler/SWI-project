@@ -27,7 +27,7 @@ public class LocationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Location> getLocationById(@PathVariable Long id) {
+    public ResponseEntity<Location> getLocationById(@PathVariable int id) {
         Optional<Location> location = locationRepository.findById(id);
         return location.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -40,7 +40,7 @@ public class LocationController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Location> updateLocation(@PathVariable Long id, @RequestBody Location locationDetails) {
+    public ResponseEntity<Location> updateLocation(@PathVariable int id, @RequestBody Location locationDetails) {
         Optional<Location> location = locationRepository.findById(id);
         if (location.isPresent()) {
             Location existingLocation = location.get();
@@ -53,7 +53,7 @@ public class LocationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLocation(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteLocation(@PathVariable int id) {
         Optional<Location> location = locationRepository.findById(id);
         if (location.isPresent()) {
             locationRepository.delete(location.get());

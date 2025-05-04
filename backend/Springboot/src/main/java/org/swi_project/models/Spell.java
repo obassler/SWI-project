@@ -24,7 +24,7 @@ public class Spell {
     private String description;
 
     @Column(name = "Type", nullable = false, length = 25)
-    private String type; // Changed from enum to String to match DB
+    private String type;
 
     @Column(name = "Level", nullable = false)
     private int level;

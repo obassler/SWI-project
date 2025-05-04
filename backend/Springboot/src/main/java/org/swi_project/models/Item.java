@@ -85,4 +85,17 @@ public class Item {
 
         return sb.toString();
     }
+
+    @ManyToOne
+    @JoinColumn(name = "character_id")
+    private Character owner;
+
+    // getters and setters
+    public Character getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Character owner) {
+        this.owner = owner;
+    }
 }

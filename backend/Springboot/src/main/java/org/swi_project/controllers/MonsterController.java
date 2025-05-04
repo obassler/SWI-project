@@ -22,7 +22,7 @@ public class MonsterController {
     }
 
     @GetMapping("/{id}")
-    public Monster getMonster(@PathVariable Long id) {
+    public Monster getMonster(@PathVariable int id) {
         return monsterRepository.findById(id).orElse(null);
     }
 
@@ -32,15 +32,15 @@ public class MonsterController {
     }
 
     @PutMapping("/{id}")
-    public Monster updateMonster(@PathVariable Long id, @RequestBody Monster updatedMonster) {
+    public Monster updateMonster(@PathVariable int id, @RequestBody Monster updatedMonster) {
         Monster monster = monsterRepository.findById(id).orElseThrow();
         monster.setName(updatedMonster.getName());
-        monster.setHp(updatedMonster.getHp());
+        monster.setHealth(updatedMonster.getHealth());
         return monsterRepository.save(monster);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMonster(@PathVariable Long id) {
+    public void deleteMonster(@PathVariable int id) {
         monsterRepository.deleteById(id);
     }
 }

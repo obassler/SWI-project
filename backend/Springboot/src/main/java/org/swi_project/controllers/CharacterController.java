@@ -22,7 +22,7 @@ public class CharacterController {
     }
 
     @GetMapping("/{id}")
-    public Character getCharacter(@PathVariable Long id) {
+    public Character getCharacter(@PathVariable int id) {
         return characterRepository.findById(id).orElse(null);
     }
 
@@ -32,7 +32,7 @@ public class CharacterController {
     }
 
     @PutMapping("/{id}")
-    public Character updateCharacter(@PathVariable Long id, @RequestBody Character updatedCharacter) {
+    public Character updateCharacter(@PathVariable int id, @RequestBody Character updatedCharacter) {
         Character character = characterRepository.findById(id).orElseThrow();
         character.setName(updatedCharacter.getName());
         character.setLevel(updatedCharacter.getLevel());
@@ -40,7 +40,7 @@ public class CharacterController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteCharacter(@PathVariable Long id) {
+    public void deleteCharacter(@PathVariable int id) {
         characterRepository.deleteById(id);
     }
 }

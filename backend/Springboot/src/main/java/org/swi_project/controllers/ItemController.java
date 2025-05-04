@@ -31,7 +31,7 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Item> getItemById(@PathVariable Long id) {
+    public ResponseEntity<Item> getItemById(@PathVariable int id) {
         Optional<Item> item = itemRepository.findById(id);
         return item.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -44,7 +44,7 @@ public class ItemController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Item> updateItem(@PathVariable Long id, @RequestBody Item itemDetails) {
+    public ResponseEntity<Item> updateItem(@PathVariable int id, @RequestBody Item itemDetails) {
         Optional<Item> item = itemRepository.findById(id);
         if (item.isPresent()) {
             Item existingItem = item.get();
@@ -52,7 +52,7 @@ public class ItemController {
             existingItem.setDescription(itemDetails.getDescription());
             existingItem.setWeight(itemDetails.getWeight());
             existingItem.setGoldValue(itemDetails.getGoldValue());
-            existingItem.setMagical(itemDetails.isMagical());
+            existingItem.setMagic(itemDetails.isMagic());
             existingItem.setMagicalProperties(itemDetails.getMagicalProperties());
             existingItem.setType(itemDetails.getType());
             existingItem.setDamageType(itemDetails.getDamageType());
@@ -66,7 +66,7 @@ public class ItemController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteItem(@PathVariable int id) {
         Optional<Item> item = itemRepository.findById(id);
         if (item.isPresent()) {
             itemRepository.delete(item.get());
@@ -78,13 +78,14 @@ public class ItemController {
 
     // Character inventory endpoints
     @GetMapping("/character/{characterId}/inventory")
-    public ResponseEntity<List<Item>> getCharacterInventory(@PathVariable Long characterId) {
-        Optional<Character> character = characterRepository.findById(characterId);
-        return character.map(value -> ResponseEntity.ok(itemRepository.findByOwner(value))).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<List<Item>> getCharacterInventory(@PathVariable int characterId) {
+        return characterRepository.findById(characterId)
+                .map(character -> ResponseEntity.ok(itemRepository.findByOwner(character)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/character/{characterId}/add")
-    public ResponseEntity<Item> addItemToCharacter(@PathVariable Long characterId, @RequestBody Item item) {
+    public ResponseEntity<Item> addItemToCharacter(@PathVariable int characterId, @RequestBody Item item) {
         Optional<Character> character = characterRepository.findById(characterId);
         if (character.isPresent()) {
             item.setOwner(character.get());
@@ -95,7 +96,7 @@ public class ItemController {
     }
 
     @PutMapping("/{itemId}/equip")
-    public ResponseEntity<Item> equipItem(@PathVariable Long itemId) {
+    public ResponseEntity<Item> equipItem(@PathVariable int itemId) {
         Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isPresent()) {
             Item item = itemOpt.get();
@@ -107,7 +108,7 @@ public class ItemController {
     }
 
     @PutMapping("/{itemId}/unequip")
-    public ResponseEntity<Item> unequipItem(@PathVariable Long itemId) {
+    public ResponseEntity<Item> unequipItem(@PathVariable int itemId) {
         Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (itemOpt.isPresent()) {
             Item item = itemOpt.get();

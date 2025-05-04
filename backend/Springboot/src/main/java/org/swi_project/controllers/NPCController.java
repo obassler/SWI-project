@@ -27,7 +27,7 @@ public class NPCController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NPC> getNPCById(@PathVariable Long id) {
+    public ResponseEntity<NPC> getNPCById(@PathVariable int id) {
         Optional<NPC> npc = npcRepository.findById(id);
         return npc.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -40,7 +40,7 @@ public class NPCController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NPC> updateNPC(@PathVariable Long id, @RequestBody NPC npcDetails) {
+    public ResponseEntity<NPC> updateNPC(@PathVariable int id, @RequestBody NPC npcDetails) {
         Optional<NPC> npc = npcRepository.findById(id);
         if (npc.isPresent()) {
             NPC existingNPC = npc.get();
@@ -53,7 +53,7 @@ public class NPCController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNPC(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteNPC(@PathVariable int id) {
         Optional<NPC> npc = npcRepository.findById(id);
         if (npc.isPresent()) {
             npcRepository.delete(npc.get());

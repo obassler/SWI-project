@@ -1,5 +1,6 @@
 package org.swi_project.controllers;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,6 @@ import java.util.Optional;
 
 import org.swi_project.models.Spell;
 import org.swi_project.models.Character;
-import org.swi_project.models.SpellType;
 import org.swi_project.repositories.SpellRepository;
 import org.swi_project.repositories.CharacterRepository;
 
@@ -32,7 +32,7 @@ public class SpellController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Spell> getSpellById(@PathVariable Long id) {
+    public ResponseEntity<Spell> getSpellById(@PathVariable int id) {
         return spellRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -45,7 +45,7 @@ public class SpellController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Spell> updateSpell(@PathVariable Long id, @RequestBody Spell spellDetails) {
+    public ResponseEntity<Spell> updateSpell(@PathVariable int id, @RequestBody Spell spellDetails) {
         return spellRepository.findById(id)
                 .map(existingSpell -> {
                     existingSpell.setName(spellDetails.getName());
@@ -58,7 +58,7 @@ public class SpellController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSpell(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteSpell(@PathVariable int id) {
         return spellRepository.findById(id)
                 .map(spell -> {
                     spellRepository.delete(spell);
@@ -68,44 +68,47 @@ public class SpellController {
     }
 
     @GetMapping("/character/{characterId}")
-    public ResponseEntity<List<Spell>> getSpellsByCharacter(@PathVariable Long characterId) {
+    public ResponseEntity<List<Spell>> getSpellsByCharacter(@PathVariable int characterId) {
         if (!characterRepository.existsById(characterId)) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(spellRepository.findByOwnerId(characterId));
+        return ResponseEntity.ok(spellRepository.findByCharacterId(characterId));
     }
 
     @PostMapping("/{spellId}/assign/{characterId}")
+    @Transactional
     public ResponseEntity<Spell> assignSpellToCharacter(
-            @PathVariable Long spellId,
-            @PathVariable Long characterId) {
-        Optional<Spell> spellOpt = spellRepository.findById(spellId);
+            @PathVariable Integer spellId,
+            @PathVariable Integer characterId) {
         Optional<Character> characterOpt = characterRepository.findById(characterId);
+        Optional<Spell> spellOpt = spellRepository.findById(spellId);
 
-        if (spellOpt.isPresent() && characterOpt.isPresent()) {
+        if (characterOpt.isPresent() && spellOpt.isPresent()) {
+            Character character = characterOpt.get();
             Spell spell = spellOpt.get();
-            spell.setOwner(characterOpt.get());
-            return ResponseEntity.ok(spellRepository.save(spell));
+            character.addSpell(spell);
+            characterRepository.save(character);
+            return ResponseEntity.ok(spell);
         }
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{spellId}/unassign")
-    public ResponseEntity<Spell> unassignSpell(@PathVariable Long spellId) {
-        return spellRepository.findById(spellId)
-                .map(spell -> {
-                    spell.setOwner(null);
-                    return ResponseEntity.ok(spellRepository.save(spell));
-                })
+    @PostMapping("/{spellId}/unassign/{characterId}")
+    @Transactional
+    public ResponseEntity<?> unassignSpellFromCharacter(
+            @PathVariable Integer spellId,
+            @PathVariable Integer characterId) {
+        return characterRepository.findById(characterId)
+                .flatMap(character -> spellRepository.findById(spellId)
+                        .map(spell -> {
+                            character.removeSpell(spell);
+                            characterRepository.save(character);
+                            return ResponseEntity.ok().build();
+                        }))
                 .orElse(ResponseEntity.notFound().build());
     }
     @GetMapping("/level/{level}")
     public List<Spell> getSpellsByLevel(@PathVariable int level) {
         return spellRepository.findByLevel(level);
-    }
-
-    @GetMapping("/type/{type}")
-    public List<Spell> getSpellsByType(@PathVariable SpellType type) {
-        return spellRepository.findByType(type);
     }
 }
