@@ -1,8 +1,8 @@
 package org.swi_project.models;
 
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import javax.persistence.*;
 
 @Entity
 @Table(name = "characterclass")
