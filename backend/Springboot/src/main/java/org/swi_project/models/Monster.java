@@ -1,9 +1,11 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
-
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class Monster {
     private String type;
 
     @ManyToMany(mappedBy = "ownedMonsters")
+    @JsonIgnoreProperties({"ownedMonsters", "items", "quests", "spells"})
     private List<Character> owners = new ArrayList<>();
 
     @ManyToMany
@@ -50,13 +53,11 @@ public class Monster {
             joinColumns = @JoinColumn(name = "Monster_Id"),
             inverseJoinColumns = @JoinColumn(name = "Item_Id")
     )
+    @JsonIgnoreProperties({"owner", "monsters"})
     private List<Item> loot = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "monstersinlocation",
-            joinColumns = @JoinColumn(name = "Monster_Id"),
-            inverseJoinColumns = @JoinColumn(name = "Location_Id")
-    )
-    private List<Location> locations = new ArrayList<>();
+    @JsonIgnore
+    @OneToMany(mappedBy = "monster")
+    private List<MonsterInLocation> locations;
+
 }

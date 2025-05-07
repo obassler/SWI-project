@@ -120,7 +120,7 @@ Client (React) <--> Spring Boot API <--> MySQL Database
 │   ├── MonsterForm.jsx
 │   ├── Location.jsx
 │   ├── LocationForm.jsx
-│   ├── StoryEditor.jsx
+│   ├── Quests.jsx
 │   └── Map.jsx
 └── App.jsx           # React Router setup
 ```

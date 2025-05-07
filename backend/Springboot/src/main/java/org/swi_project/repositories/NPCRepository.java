@@ -11,5 +11,6 @@ import java.util.List;
 public interface NPCRepository extends JpaRepository<NPC, Integer> {
     List<NPC> findByRole(String role);
     List<NPC> findByHostility(boolean hostility);
-    List<NPC> findByLocationsContaining(Location location);
+    List<NPC> findByLocation(Location location);
+
 }

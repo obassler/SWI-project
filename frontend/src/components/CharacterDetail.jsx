@@ -1,204 +1,174 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
 export default function CharacterDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [character, setCharacter] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [availableItems, setAvailableItems] = useState([]);
+    const [availableSpells, setAvailableSpells] = useState([]);
+    const [selectedItemId, setSelectedItemId] = useState('');
+    const [selectedSpellId, setSelectedSpellId] = useState('');
+
     const fetchCharacter = async () => {
         setLoading(true);
-        setError(null);
         try {
-            console.log('Fetching character with ID:', id);
             const data = await api.getCharacter(id);
-            console.log('Character data:', data);
-
-            if (!data || typeof data !== 'object') {
-                throw new Error('Invalid character data');
-            }
-
-            const processedCharacter = {
+            setCharacter({
                 ...data,
-                name: data.name || 'Unnamed',
-                currentHp: data.currentHp ?? 0,
-                maxHp: data.maxHp ?? 0,
-                strength: data.strength ?? 10,
-                dexterity: data.dexterity ?? 10,
-                constitution: data.constitution ?? 10,
-                intelligence: data.intelligence ?? 10,
-                wisdom: data.wisdom ?? 10,
-                charisma: data.charisma ?? 10,
-                status: data.status || 'Healthy',
-                items: Array.isArray(data.items) ? data.items : [],
-                spells: Array.isArray(data.spells) ? data.spells : [],
-                race: data.race?.name ? data.race : { name: 'Unknown' },
-                characterClass: data.characterClass?.name ? data.characterClass : { name: 'Unknown' },
-                background: data.background || '',
-                alignment: data.alignment || '',
-                specialization: data.specialization || '',
-                notes: data.notes || ''
-            };
-
-            setCharacter(processedCharacter);
+                race: data.race || { name: 'Unknown' },
+                characterClass: data.characterClass || { name: 'Unknown' },
+                items: data.items || [],
+                spells: data.spells || []
+            });
         } catch (err) {
-            console.error('Error fetching character:', err);
             setError('Failed to load character');
         } finally {
             setLoading(false);
         }
     };
 
+    const fetchAvailableData = async () => {
+        try {
+            const items = await api.getItems();
+            const spells = await api.getSpells();
+            setAvailableItems(items);
+            setAvailableSpells(spells);
+        } catch (err) {
+            console.error('Failed to load item/spell list:', err);
+        }
+    };
+
     useEffect(() => {
         fetchCharacter();
+        fetchAvailableData();
     }, [id]);
+
+    const handleAddItem = async () => {
+        if (!selectedItemId) return;
+        try {
+            await api.assignItemToCharacter(character.id, selectedItemId);
+            setSelectedItemId('');
+            await fetchCharacter();
+        } catch (err) {
+            alert("Failed to assign item: " + err.response?.data || err.message);
+            console.error('Failed to assign item:', err);
+        }
+    };
+
+
+    const handleAddSpell = async () => {
+        if (!selectedSpellId) return;
+        try {
+            await api.assignSpellToCharacter(character.id, selectedSpellId);
+            setSelectedSpellId('');
+            await fetchCharacter();
+        } catch (err) {
+            console.error('Failed to assign spell:', err);
+        }
+    };
 
     if (loading) return <LoadingSpinner message="Loading character..." />;
     if (error) return <ErrorMessage message={error} onRetry={fetchCharacter} />;
-    if (!character || !character.name) return <p className="text-red-500">Character not found or invalid data.</p>;
+    if (!character) return null;
 
     return (
-        <div className="bg-gray-800 p-6 rounded-lg max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-yellow-400">{character.name}</h1>
-                    <p className="text-gray-300">
-                        {character.race.name} {character.characterClass.name} • Level {character.level}
-                    </p>
+        <div className="max-w-6xl mx-auto p-6 bg-gray-900 text-white rounded-lg">
+            <h1 className="text-3xl font-bold text-yellow-300 mb-2">{character.name}</h1>
+            <p className="text-gray-300 mb-4">
+                {character.race.name} {character.characterClass.name} • Level {character.level}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gray-800 p-4 rounded">
+                    <h2 className="text-lg font-semibold text-yellow-400 mb-2">HP & Status</h2>
+                    <p>HP: {character.currentHp} / {character.maxHp}</p>
+                    <p>Status: {character.status}</p>
                 </div>
-                <div className="bg-gray-700 p-3 rounded-lg min-w-[200px]">
-                    <div className="flex justify-between items-center mb-1">
-                        <span className="text-gray-300">HP:</span>
-                        <span className="font-bold text-red-400">
-                            {character.currentHp} / {character.maxHp}
-                        </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-gray-300">Status:</span>
-                        <span className="capitalize">{character.status.toLowerCase()}</span>
-                    </div>
+
+                <div className="bg-gray-800 p-4 rounded">
+                    <h2 className="text-lg font-semibold text-yellow-400 mb-2">Abilities</h2>
+                    <ul className="grid grid-cols-2 gap-x-4">
+                        <li>STR: {character.strength}</li>
+                        <li>DEX: {character.dexterity}</li>
+                        <li>CON: {character.constitution}</li>
+                        <li>INT: {character.intelligence}</li>
+                        <li>WIS: {character.wisdom}</li>
+                        <li>CHA: {character.charisma}</li>
+                    </ul>
+                </div>
+
+                <div className="bg-gray-800 p-4 rounded">
+                    <h2 className="text-lg font-semibold text-yellow-400 mb-2">Details</h2>
+                    <p><strong>Background:</strong> {character.background || 'None'}</p>
+                    <p><strong>Alignment:</strong> {character.alignment || 'Unknown'}</p>
+                    <p><strong>Specialization:</strong> {character.specialization || 'None'}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                {/* Abilities */}
-                <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-xl font-semibold text-yellow-300 mb-4">Abilities</h2>
-                    <div className="grid grid-cols-3 gap-3">
-                        {[
-                            { name: 'STR', value: character.strength },
-                            { name: 'DEX', value: character.dexterity },
-                            { name: 'CON', value: character.constitution },
-                            { name: 'INT', value: character.intelligence },
-                            { name: 'WIS', value: character.wisdom },
-                            { name: 'CHA', value: character.charisma }
-                        ].map((ability) => (
-                            <div key={ability.name} className="bg-gray-800 p-2 rounded text-center">
-                                <div className="text-gray-400 text-sm">{ability.name}</div>
-                                <div className="text-xl font-bold">{ability.value}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Details */}
-                <div className="bg-gray-700 p-4 rounded-lg">
-                    <h2 className="text-xl font-semibold text-yellow-300 mb-4">Character Details</h2>
-                    <div className="space-y-3">
-                        <div>
-                            <h3 className="text-gray-400 text-sm">Background</h3>
-                            <p>{character.background || 'None provided'}</p>
-                        </div>
-                        <div>
-                            <h3 className="text-gray-400 text-sm">Alignment</h3>
-                            <p>{character.alignment || 'Unknown'}</p>
-                        </div>
-                        <div>
-                            <h3 className="text-gray-400 text-sm">Specialization</h3>
-                            <p>{character.specialization || 'None'}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Notes */}
-                <div className="bg-gray-700 p-4 rounded-lg lg:col-span-1">
-                    <h2 className="text-xl font-semibold text-yellow-300 mb-4">Notes</h2>
-                    <div className="bg-gray-800 p-3 rounded whitespace-pre-line min-h-[150px]">
-                        {character.notes || 'No notes available'}
-                    </div>
-                </div>
+            <div className="bg-gray-800 p-4 rounded mb-6">
+                <h2 className="text-lg font-semibold text-yellow-400 mb-2">Notes</h2>
+                <p className="whitespace-pre-wrap">{character.notes || 'No notes provided.'}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Inventory */}
-                <div className="bg-gray-700 p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold text-yellow-300">Inventory</h2>
-                        <span className="text-gray-400 text-sm">
-                            {character.items.length} items
-                        </span>
-                    </div>
-                    {character.items.length > 0 ? (
-                        <ul className="space-y-2">
-                            {character.items.map((item, index) => (
-                                <li key={index} className="bg-gray-800 p-3 rounded flex justify-between">
-                                    <span>{item.name}</span>
-                                    {item.quantity > 1 && (
-                                        <span className="text-gray-400">x{item.quantity}</span>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-gray-400 italic">No items in inventory</p>
-                    )}
-                </div>
-
-                {/* Spells */}
-                <div className="bg-gray-700 p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold text-yellow-300">Spells</h2>
-                        <span className="text-gray-400 text-sm">
-                            {character.spells.length} spells
-                        </span>
-                    </div>
-                    {character.spells.length > 0 ? (
-                        <ul className="space-y-2">
-                            {character.spells.map((spell, index) => (
-                                <li key={index} className="bg-gray-800 p-3 rounded">
-                                    {spell.name}
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className="text-gray-400 italic">No spells known</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
-                <Link
-                    to="/"
-                    className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-center transition-colors"
-                >
-                    ← Back to Dashboard
-                </Link>
-                <div className="flex gap-3">
-                    <Link
-                        to={`/characters/${id}/edit`}
-                        className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded text-center transition-colors"
+            {/* Inventory Section */}
+            <div className="bg-gray-800 p-4 rounded mb-6">
+                <h2 className="text-xl font-semibold text-yellow-300 mb-3">Inventory ({character.items.length})</h2>
+                <ul className="space-y-2 mb-4">
+                    {character.items.map(item => (
+                        <li key={item.id} className="bg-gray-700 p-2 rounded">
+                            <strong>{item.name}</strong>
+                            {item.equipState && <span className="ml-2 text-green-400">[Equipped]</span>}
+                            <div className="text-sm text-gray-400">{item.description}</div>
+                        </li>
+                    ))}
+                </ul>
+                <div className="flex gap-2 items-center">
+                    <select
+                        value={selectedItemId}
+                        onChange={e => setSelectedItemId(e.target.value)}
+                        className="p-2 bg-gray-700 text-white rounded"
                     >
-                        Edit Character
-                    </Link>
-                    <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors">
-                        Delete Character
-                    </button>
+                        <option value="">-- Select Item --</option>
+                        {availableItems.map(item => (
+                            <option key={item.id} value={item.id}>{item.name}</option>
+                        ))}
+                    </select>
+                    <button onClick={handleAddItem} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add Item</button>
                 </div>
+            </div>
+
+            {/* Spells Section */}
+            <div className="bg-gray-800 p-4 rounded mb-6">
+                <h2 className="text-xl font-semibold text-yellow-300 mb-3">Spells ({character.spells.length})</h2>
+                <ul className="space-y-2 mb-4">
+                    {character.spells.map(spell => (
+                        <li key={spell.id} className="bg-gray-700 p-2 rounded">{spell.name}</li>
+                    ))}
+                </ul>
+                <div className="flex gap-2 items-center">
+                    <select
+                        value={selectedSpellId}
+                        onChange={e => setSelectedSpellId(e.target.value)}
+                        className="p-2 bg-gray-700 text-white rounded"
+                    >
+                        <option value="">-- Select Spell --</option>
+                        {availableSpells.map(spell => (
+                            <option key={spell.id} value={spell.id}>{spell.name}</option>
+                        ))}
+                    </select>
+                    <button onClick={handleAddSpell} className="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">Add Spell</button>
+                </div>
+            </div>
+
+            <div className="mt-6">
+                <Link to="/" className="text-blue-400 hover:underline">← Back to Dashboard</Link>
             </div>
         </div>
     );

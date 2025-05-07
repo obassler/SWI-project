@@ -8,225 +8,108 @@ export default function Items() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [newItem, setNewItem] = useState({
-        name: '',
-        type: '',
-        description: '',
-        weight: '',
-        goldValue: '',
-        magicalProperties: '',
-        equipState: false,
-        damageType: '',
-        damageRoll: '',
-        armorClass: ''
+        name: '', type: '', description: '', weight: '', goldValue: '', magicalProperties: '', equipState: false, damageType: '', damageRoll: '', armorClass: ''
     });
     const [editingItemId, setEditingItemId] = useState(null);
-    const [editForm, setEditForm] = useState({
-        name: '',
-        type: '',
-        description: '',
-        weight: '',
-        goldValue: '',
-        magicalProperties: '',
-        equipState: false,
-        damageType: '',
-        damageRoll: '',
-        armorClass: ''
-    });
+
+    useEffect(() => { fetchItems(); }, []);
 
     const fetchItems = async () => {
         setLoading(true);
-        setError(null);
         try {
             const data = await api.getItems();
             setItems(data);
-            setLoading(false);
         } catch (err) {
             setError('Failed to load items');
+        } finally {
             setLoading(false);
-            console.error(err);
         }
     };
 
-    useEffect(() => {
-        fetchItems();
-    }, []);
-
     const handleInputChange = (e) => {
-        setNewItem({ ...newItem, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setNewItem(prev => ({ ...prev, [name]: value ?? '' }));
     };
 
-    const handleEditChange = (e) => {
-        setEditForm({ ...editForm, [e.target.name]: e.target.value });
-    };
-
-    const addItem = async () => {
-        if (!newItem.name || !newItem.type) return;
+    const saveItem = async () => {
         try {
-            const created = await api.createItem(newItem);
-            setItems([...items, created]);
-            setNewItem({
-                name: '',
-                type: '',
-                description: '',
-                weight: '',
-                goldValue: '',
-                magicalProperties: '',
-                equipState: false,
-                damageType: '',
-                damageRoll: '',
-                armorClass: ''
-            });
+            const payload = {
+                ...newItem,
+                weight: parseInt(newItem.weight) || 0,
+                goldValue: parseInt(newItem.goldValue) || 0,
+                armorClass: parseInt(newItem.armorClass) || 0
+            };
+            const res = editingItemId
+                ? await api.updateItem(editingItemId, payload)
+                : await api.createItem(payload);
+            await fetchItems();
+            setNewItem({ name: '', type: '', description: '', weight: '', goldValue: '', magicalProperties: '', equipState: false, damageType: '', damageRoll: '', armorClass: '' });
+            setEditingItemId(null);
         } catch (err) {
-            console.error('Failed to add item', err);
+            setError('Failed to save item');
         }
     };
 
     const deleteItem = async (id) => {
         try {
             await api.deleteItem(id);
-            setItems(items.filter(item => item.id !== id));
-        } catch (err) {
-            console.error('Failed to delete item', err);
+            fetchItems();
+        } catch {
+            setError('Failed to delete item');
         }
     };
-
-    const startEditing = (item) => {
-        setEditingItemId(item.id);
-        setEditForm({ ...item });
-    };
-
-    const cancelEditing = () => {
-        setEditingItemId(null);
-        setEditForm({
-            name: '',
-            type: '',
-            description: '',
-            weight: '',
-            goldValue: '',
-            magicalProperties: '',
-            equipState: false,
-            damageType: '',
-            damageRoll: '',
-            armorClass: ''
-        });
-    };
-
-    const saveEdit = async () => {
-        try {
-            const updated = await api.updateItem(editingItemId, editForm);
-            setItems(items.map(item => item.id === updated.id ? updated : item));
-            cancelEditing();
-        } catch (err) {
-            console.error('Failed to update item', err);
-        }
-    };
-
-    if (loading) return <LoadingSpinner message="Loading items..." />;
-    if (error) return <ErrorMessage message={error} onRetry={fetchItems} />;
 
     return (
-        <div className="container mx-auto px-4">
-            <div className="bg-gray-700 p-4 rounded space-y-4">
-                <h2 className="text-2xl text-yellow-300">Items</h2>
-
-                {/* Add New Item */}
-                <div className="flex flex-wrap gap-4 items-end">
-                    {[
-                        { label: 'Name', name: 'name' },
-                        { label: 'Type', name: 'type' },
-                        { label: 'Description', name: 'description' },
-                        { label: 'Weight', name: 'weight', type: 'number' },
-                        { label: 'Gold Value', name: 'goldValue', type: 'number' },
-                        { label: 'Magical Properties', name: 'magicalProperties' },
-                        { label: 'Damage Type', name: 'damageType' },
-                        { label: 'Damage Roll', name: 'damageRoll' },
-                        { label: 'Armor Class', name: 'armorClass', type: 'number' }
-                    ].map(({ label, name, type = 'text' }) => (
-                        <div key={name} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4">
-                            <label className="block text-gray-300 text-sm">{label}</label>
-                            <input
-                                name={name}
-                                value={newItem[name]}
-                                onChange={handleInputChange}
-                                type={type}
-                                className="w-full p-1 rounded bg-gray-600 text-white"
-                            />
-                        </div>
-                    ))}
-                    <div className="w-full sm:w-auto">
-                        <button
-                            onClick={addItem}
-                            className="bg-green-600 px-4 py-2 rounded hover:bg-green-700 mt-2"
-                        >
-                            Add Item
-                        </button>
+        <div className="p-4 space-y-6 text-white">
+            {loading ? (
+                <LoadingSpinner message="Loading items..." />
+            ) : error ? (
+                <ErrorMessage message={error} onRetry={fetchItems} />
+            ) : (
+                <>
+                    <div className="bg-gray-700 p-4 rounded space-y-2">
+                        <h2 className="text-xl text-yellow-200">{editingItemId ? 'Edit Item' : 'Add New Item'}</h2>
+                        {["name", "type", "description", "magicalProperties", "damageType", "damageRoll"].map(field => (
+                            <input key={field} name={field} value={newItem[field] ?? ''} onChange={handleInputChange} placeholder={field}
+                                   className="w-full p-2 rounded bg-gray-600 text-white" />
+                        ))}
+                        {["weight", "goldValue", "armorClass"].map(field => (
+                            <input key={field} type="number" name={field} value={newItem[field] ?? ''} onChange={handleInputChange} placeholder={field.toUpperCase()}
+                                   className="w-full p-2 rounded bg-gray-600 text-white" />
+                        ))}
+                        <button onClick={saveItem} className="bg-yellow-600 px-4 py-1 rounded hover:bg-yellow-700">Save</button>
                     </div>
-                </div>
 
-                {/* Item List */}
-                {items.length === 0 ? (
-                    <p className="text-gray-300">No items available.</p>
-                ) : (
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <ul className="space-y-3">
                         {items.map(item => (
-                            <li key={item.id} className="bg-gray-600 p-2 rounded">
-                                {editingItemId === item.id ? (
-                                    <div className="space-y-1">
-                                        {[
-                                            'name', 'type', 'description', 'weight',
-                                            'goldValue', 'magicalProperties',
-                                            'damageType', 'damageRoll', 'armorClass'
-                                        ].map(field => (
-                                            <input
-                                                key={field}
-                                                name={field}
-                                                value={editForm[field]}
-                                                onChange={handleEditChange}
-                                                className="w-full p-1 bg-gray-700 text-white rounded"
-                                            />
-                                        ))}
-                                        <div className="flex gap-2 mt-2">
-                                            <button
-                                                onClick={saveEdit}
-                                                className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                onClick={cancelEditing}
-                                                className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-1">
-                                        <h3 className="text-yellow-400">{item.name}</h3>
-                                        <p className="text-gray-300">Type: {item.type}</p>
-                                        <p className="text-gray-400">{item.description}</p>
-                                        <p className="text-gray-500">Weight: {item.weight}</p>
-                                        <p className="text-gray-500">Gold: {item.goldValue}</p>
-                                        {item.magic && <p className="text-gray-400">Magical</p>}
-                                        <button
-                                            onClick={() => startEditing(item)}
-                                            className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => deleteItem(item.id)}
-                                            className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
+                            <li key={item.id} className="bg-gray-700 p-4 rounded">
+                                <h3 className="text-yellow-300 font-semibold">{item.name}</h3>
+                                <p className="text-gray-300 text-sm">{item.description}</p>
+                                <p className="text-gray-400 text-sm">Type: {item.type} | Weight: {item.weight} | Gold: {item.goldValue}</p>
+                                {item.magic && <p className="text-green-400 text-sm">Magical: {item.magicalProperties}</p>}
+                                {item.damageType && <p className="text-sm text-blue-300">Damage: {item.damageRoll} ({item.damageType})</p>}
+                                {item.armorClass > 0 && <p className="text-sm text-purple-300">Armor Class: {item.armorClass}</p>}
+                                <div className="flex gap-3 mt-2">
+                                    <button onClick={() => { setEditingItemId(item.id); setNewItem({
+                                        name: item.name ?? '',
+                                        type: item.type ?? '',
+                                        description: item.description ?? '',
+                                        weight: item.weight?.toString() ?? '',
+                                        goldValue: item.goldValue?.toString() ?? '',
+                                        magicalProperties: item.magicalProperties ?? '',
+                                        equipState: item.equipState ?? false,
+                                        damageType: item.damageType ?? '',
+                                        damageRoll: item.damageRoll ?? '',
+                                        armorClass: item.armorClass?.toString() ?? ''
+                                    }); }}
+                                            className="text-green-400 hover:text-green-600">✎</button>
+                                    <button onClick={() => deleteItem(item.id)} className="text-red-400 hover:text-red-600">✕</button>
+                                </div>
                             </li>
                         ))}
                     </ul>
-                )}
-            </div>
+                </>
+            )}
         </div>
     );
 }

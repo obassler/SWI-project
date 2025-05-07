@@ -1,9 +1,11 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,29 +13,27 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "npc")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class NPC {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id")
     private Integer id;
 
-    @Column(name = "Name", nullable = false, length = 25)
+    @Column(nullable = false, length = 25)
     private String name;
 
-    @Column(name = "Role", nullable = false, length = 25)
+    @Column(nullable = false, length = 25)
     private String role;
 
-    @Column(name = "Description", nullable = false, length = 200)
+    @Column(nullable = false, length = 200)
     private String description;
 
-    @Column(name = "Hostility", nullable = false)
+    @Column(nullable = false)
     private boolean hostility;
 
-    @ManyToMany
-    @JoinTable(
-            name = "npclocation",
-            joinColumns = @JoinColumn(name = "NPC_Id"),
-            inverseJoinColumns = @JoinColumn(name = "Location_Id")
-    )
-    private List<Location> locations = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "location_id")
+    @JsonBackReference
+    private Location location;
 }

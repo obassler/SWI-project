@@ -85,15 +85,29 @@ public class ItemController {
     }
 
     @PostMapping("/character/{characterId}/add")
-    public ResponseEntity<Item> addItemToCharacter(@PathVariable int characterId, @RequestBody Item item) {
-        Optional<Character> character = characterRepository.findById(characterId);
-        if (character.isPresent()) {
-            item.setOwner(character.get());
-            return ResponseEntity.status(HttpStatus.CREATED).body(itemRepository.save(item));
-        } else {
+    public ResponseEntity<?> addItemToCharacter(@PathVariable int characterId, @RequestBody Item item) {
+        Optional<Character> characterOpt = characterRepository.findById(characterId);
+        if (characterOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        Character character = characterOpt.get();
+
+        long weapons = character.getItems().stream().filter(Item::isWeapon).count();
+        long rings = character.getItems().stream().filter(i -> "RING".equalsIgnoreCase(i.getType())).count();
+
+        if (item.isWeapon() && weapons >= 2) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Character can't carry more than 2 weapons.");
+        }
+        if ("RING".equalsIgnoreCase(item.getType()) && rings >= 4) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Character can't wear more than 4 rings.");
+        }
+
+        item.setOwner(character);
+        Item savedItem = itemRepository.save(item);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
     }
+
 
     @PutMapping("/{itemId}/equip")
     public ResponseEntity<Item> equipItem(@PathVariable int itemId) {

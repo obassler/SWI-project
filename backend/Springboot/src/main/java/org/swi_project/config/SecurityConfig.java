@@ -21,6 +21,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/auth/**"),
                                 new AntPathRequestMatcher("/api/characters/**"),
                                 new AntPathRequestMatcher("/api/npcs/**"),
+                                new AntPathRequestMatcher("/api/story/**"),
                                 new AntPathRequestMatcher("/api/quests/**"),
                                 new AntPathRequestMatcher("/api/items/**"),
                                 new AntPathRequestMatcher("/api/monsters/**"),

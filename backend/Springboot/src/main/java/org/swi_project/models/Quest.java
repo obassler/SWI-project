@@ -31,4 +31,5 @@ public class Quest {
 
     @ManyToMany(mappedBy = "quests")
     private List<Character> participants = new ArrayList<>();
+
 }

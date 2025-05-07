@@ -3,6 +3,7 @@ package org.swi_project.models;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Getter
 @Setter
@@ -49,15 +50,18 @@ public class Item {
 
     // Helper methods
     public boolean isWeapon() {
-        return "WEAPON".equals(type);
+        return "WEAPON".equalsIgnoreCase(type);
     }
 
     public boolean isArmor() {
-        return "ARMOR".equals(type) || "SHIELD".equals(type);
+        return "ARMOR".equalsIgnoreCase(type) || "SHIELD".equalsIgnoreCase(type);
     }
 
     public boolean isEquippable() {
-        return isWeapon() || isArmor() || "RING".equals(type) || "AMULET".equals(type) || "CLOTHING".equals(type);
+        return isWeapon() || isArmor() ||
+                "RING".equalsIgnoreCase(type) ||
+                "AMULET".equalsIgnoreCase(type) ||
+                "CLOTHING".equalsIgnoreCase(type);
     }
 
     public void equip() {
@@ -88,9 +92,9 @@ public class Item {
 
     @ManyToOne
     @JoinColumn(name = "character_id")
+    @JsonIgnoreProperties("items")  // Avoid infinite recursion from Character -> Item -> Character...
     private Character owner;
 
-    // getters and setters
     public Character getOwner() {
         return owner;
     }

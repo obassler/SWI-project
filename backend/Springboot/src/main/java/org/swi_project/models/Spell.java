@@ -1,5 +1,6 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,5 +31,7 @@ public class Spell {
     private int level;
 
     @ManyToMany(mappedBy = "spells")
+    @JsonIgnoreProperties("spells")
     private List<Character> characters = new ArrayList<>();
+
 }

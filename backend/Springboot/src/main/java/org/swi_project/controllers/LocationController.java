@@ -1,44 +1,96 @@
 package org.swi_project.controllers;
 
-import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.swi_project.models.Location;
+import org.swi_project.models.Monster;
+import org.swi_project.models.MonsterInLocation;
+import org.swi_project.models.NPC;
+import org.swi_project.repositories.LocationRepository;
+import org.swi_project.repositories.MonsterRepository;
+import org.swi_project.repositories.NPCRepository;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.swi_project.models.Location;
-import org.swi_project.repositories.LocationRepository;
-import org.swi_project.services.LocationService;
 
 @RestController
 @RequestMapping("/api/locations")
 public class LocationController {
 
     @Autowired
-    private LocationService locationService;
+    private LocationRepository locationRepository;
 
-    @PostMapping("/{locationId}/monsters/{monsterId}")
-    public ResponseEntity<Location> addMonsterToLocation(@PathVariable int locationId, @PathVariable int monsterId) {
-        Location updatedLocation = locationService.addMonsterToLocation(locationId, monsterId);
-        return ResponseEntity.ok(updatedLocation);
+    @Autowired
+    private MonsterRepository monsterRepository;
+
+    @Autowired
+    private NPCRepository npcRepository;
+
+    @GetMapping
+    public List<Location> getAllLocations() {
+        return locationRepository.findAll();
     }
 
-    @DeleteMapping("/{locationId}/monsters/{monsterId}")
-    public ResponseEntity<Location> removeMonsterFromLocation(@PathVariable int locationId, @PathVariable int monsterId) {
-        Location updatedLocation = locationService.removeMonsterFromLocation(locationId, monsterId);
-        return ResponseEntity.ok(updatedLocation);
+    @GetMapping("/{id}")
+    public ResponseEntity<Location> getLocationById(@PathVariable int id) {
+        Optional<Location> location = locationRepository.findById(id);
+        return location.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{locationId}/npcs/{npcId}")
-    public ResponseEntity<Location> addNpcToLocation(@PathVariable int locationId, @PathVariable int npcId) {
-        Location updatedLocation = locationService.addNpcToLocation(locationId, npcId);
-        return ResponseEntity.ok(updatedLocation);
-    }
+    @PutMapping("/{id}")
+    public ResponseEntity<Location> updateLocation(@PathVariable int id, @RequestBody Location updatedLocation) {
+        Optional<Location> optionalLocation = locationRepository.findById(id);
+        if (optionalLocation.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
-    @DeleteMapping("/{locationId}/npcs/{npcId}")
-    public ResponseEntity<Location> removeNpcFromLocation(@PathVariable int locationId, @PathVariable int npcId) {
-        Location updatedLocation = locationService.removeNpcFromLocation(locationId, npcId);
-        return ResponseEntity.ok(updatedLocation);
+        Location existing = optionalLocation.get();
+        existing.setName(updatedLocation.getName());
+        existing.setDescription(updatedLocation.getDescription());
+
+        List<NPC> attachedNpcs = new ArrayList<>();
+        if (updatedLocation.getNpcs() != null && !updatedLocation.getNpcs().isEmpty()) {
+            for (NPC npc : updatedLocation.getNpcs()) {
+                if (npc.getId() != null) {
+                    Optional<NPC> found = npcRepository.findById(npc.getId());
+                    found.ifPresent(attachedNpcs::add);
+                }
+            }
+        }
+
+        for (NPC npc : existing.getNpcs()) {
+            npc.setLocation(null);
+        }
+        existing.getNpcs().clear();
+
+        for (NPC npc : attachedNpcs) {
+            npc.setLocation(existing);
+        }
+        existing.getNpcs().addAll(attachedNpcs);
+
+
+
+        existing.getMonstersInLocation().clear();
+        List<MonsterInLocation> newLinks = new ArrayList<>();
+        if (updatedLocation.getMonstersInLocation() != null) {
+            for (MonsterInLocation mil : updatedLocation.getMonstersInLocation()) {
+                if (mil.getMonster() != null && mil.getMonster().getId() != null) {
+                    Optional<Monster> optMonster = monsterRepository.findById(mil.getMonster().getId());
+                    if (optMonster.isPresent()) {
+                        MonsterInLocation link = new MonsterInLocation();
+                        link.setLocation(existing);
+                        link.setMonster(optMonster.get());
+                        link.setQuantity(mil.getQuantity());
+                        newLinks.add(link);
+                    }
+                }
+            }
+        }
+        existing.getMonstersInLocation().addAll(newLinks);
+
+        Location saved = locationRepository.save(existing);
+        return ResponseEntity.ok(saved);
     }
 }

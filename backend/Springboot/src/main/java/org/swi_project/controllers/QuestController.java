@@ -14,6 +14,7 @@ import org.swi_project.repositories.CharacterRepository;
 
 @RestController
 @RequestMapping("/api/quests")
+@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class QuestController {
 
     private final QuestRepository questRepository;
@@ -67,6 +68,7 @@ public class QuestController {
             return ResponseEntity.notFound().build();
         }
     }
+
     @GetMapping("/{questId}/participants")
     public ResponseEntity<List<Character>> getQuestParticipants(@PathVariable int questId) {
         Optional<Quest> quest = questRepository.findById(questId);
@@ -112,6 +114,7 @@ public class QuestController {
         }
         return ResponseEntity.notFound().build();
     }
+
     @PutMapping("/{questId}/complete")
     public ResponseEntity<Quest> completeQuest(@PathVariable int questId) {
         Optional<Quest> questOpt = questRepository.findById(questId);

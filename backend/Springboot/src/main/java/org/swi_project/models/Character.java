@@ -1,5 +1,6 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -76,7 +77,9 @@ public class Character {
             joinColumns = @JoinColumn(name = "Character_Id"),
             inverseJoinColumns = @JoinColumn(name = "Spell_Id")
     )
+    @JsonIgnoreProperties("characters") // ignore loop back
     private List<Spell> spells = new ArrayList<>();
+
 
     @ManyToMany
     @JoinTable(

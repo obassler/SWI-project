@@ -1,5 +1,6 @@
 package org.swi_project.controllers;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.swi_project.models.Monster;
 import org.swi_project.repositories.MonsterRepository;
@@ -22,8 +23,10 @@ public class MonsterController {
     }
 
     @GetMapping("/{id}")
-    public Monster getMonster(@PathVariable int id) {
-        return monsterRepository.findById(id).orElse(null);
+    public ResponseEntity<Monster> getMonster(@PathVariable Integer id) {
+        return monsterRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
@@ -32,15 +35,28 @@ public class MonsterController {
     }
 
     @PutMapping("/{id}")
-    public Monster updateMonster(@PathVariable int id, @RequestBody Monster updatedMonster) {
-        Monster monster = monsterRepository.findById(id).orElseThrow();
-        monster.setName(updatedMonster.getName());
-        monster.setHealth(updatedMonster.getHealth());
-        return monsterRepository.save(monster);
+    public ResponseEntity<Monster> updateMonster(@PathVariable Integer id, @RequestBody Monster updated) {
+        return monsterRepository.findById(id)
+                .map(monster -> {
+                    monster.setName(updated.getName());
+                    monster.setDescription(updated.getDescription());
+                    monster.setHealth(updated.getHealth());
+                    monster.setAttack(updated.getAttack());
+                    monster.setDefense(updated.getDefense());
+                    monster.setBoss(updated.isBoss());
+                    monster.setAbilities(updated.getAbilities());
+                    monster.setType(updated.getType());
+                    return ResponseEntity.ok(monsterRepository.save(monster));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMonster(@PathVariable int id) {
-        monsterRepository.deleteById(id);
+    public ResponseEntity<Void> deleteMonster(@PathVariable Integer id) {
+        if (monsterRepository.existsById(id)) {
+            monsterRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

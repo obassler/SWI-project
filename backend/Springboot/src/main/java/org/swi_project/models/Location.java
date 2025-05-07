@@ -1,9 +1,11 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import java.util.List;
 @Entity
 @Table(name = "location")
 public class Location {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Id")
@@ -23,9 +26,11 @@ public class Location {
     @Column(name = "Description", nullable = false, length = 200)
     private String description;
 
-    @ManyToMany(mappedBy = "locations")
-    private List<Monster> monsters = new ArrayList<>();
+    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("location")
+    private List<MonsterInLocation> monstersInLocation = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "locations")
-    private List<NPC> npcs = new ArrayList<>();
+    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<NPC> npcs;
 }
