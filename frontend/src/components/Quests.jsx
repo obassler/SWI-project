@@ -4,38 +4,26 @@ import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
 export default function Quests() {
-  const [story, setStory] = useState('');
-  const [originalStory, setOriginalStory] = useState('');
   const [quests, setQuests] = useState([]);
   const [newQuest, setNewQuest] = useState({
     title: '',
     description: '',
     type: 'Main',
-    completion: false
+    completion: false,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [storyChanged, setStoryChanged] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [editingQuest, setEditingQuest] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const timeoutRef = useRef(null);
-  const textareaRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Add error handling for each promise individually
-        let storyData, questData;
-
-        try {
-          storyData = await api.getStory();
-        } catch (err) {
-          console.error('Failed to load story:', err);
-          storyData = { text: '' };
-        }
+        let questData;
 
         try {
           questData = await api.getQuests();
@@ -44,12 +32,10 @@ export default function Quests() {
           questData = [];
         }
 
-        setStory(storyData?.text || '');
-        setOriginalStory(storyData?.text || '');
         setQuests(questData || []);
       } catch (err) {
         console.error('General error in fetching data:', err);
-        setError('Failed to load story and quests');
+        setError('Failed to load quests');
       } finally {
         setLoading(false);
       }
@@ -57,19 +43,6 @@ export default function Quests() {
 
     fetchData();
   }, []);
-
-  // Check if story has changed from original
-  useEffect(() => {
-    setStoryChanged(story !== originalStory);
-  }, [story, originalStory]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [story]);
 
   // Clear success message after delay
   useEffect(() => {
@@ -84,20 +57,6 @@ export default function Quests() {
     };
   }, [saveSuccess]);
 
-  const saveStory = async () => {
-    setSaving(true);
-    try {
-      await api.updateStory({ text: story });
-      setOriginalStory(story);
-      setStoryChanged(false);
-      setSaveSuccess(true);
-    } catch (err) {
-      console.error('Failed to save story:', err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const addQuest = async () => {
     if (!newQuest.title.trim() || !newQuest.description.trim()) return;
 
@@ -106,6 +65,7 @@ export default function Quests() {
       if (added) {
         setQuests([...quests, added]);
         setNewQuest({ title: '', description: '', type: 'Main', completion: false });
+        setSaveSuccess(true);
       }
     } catch (err) {
       console.error('Failed to add quest:', err);
@@ -113,7 +73,7 @@ export default function Quests() {
   };
 
   const startEditQuest = (quest) => {
-    setEditingQuest({...quest});
+    setEditingQuest({ ...quest });
     setIsEditing(true);
   };
 
@@ -127,7 +87,7 @@ export default function Quests() {
 
     try {
       await api.updateQuest(editingQuest.id, editingQuest);
-      setQuests(quests.map(q => q.id === editingQuest.id ? editingQuest : q));
+      setQuests(quests.map((q) => (q.id === editingQuest.id ? editingQuest : q)));
       setEditingQuest(null);
       setIsEditing(false);
       setSaveSuccess(true);
@@ -136,18 +96,10 @@ export default function Quests() {
     }
   };
 
-  const handleEditChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditingQuest(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
   const deleteQuest = async (id) => {
     try {
       await api.deleteQuest(id);
-      setQuests(quests.filter(q => q.id !== id));
+      setQuests(quests.filter((q) => q.id !== id));
       if (editingQuest?.id === id) {
         cancelEditQuest();
       }
@@ -158,9 +110,17 @@ export default function Quests() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewQuest(prev => ({
+    setNewQuest((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditingQuest((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -168,86 +128,26 @@ export default function Quests() {
     try {
       const updatedQuest = { ...quest, completion: !quest.completion };
       await api.updateQuest(quest.id, updatedQuest);
-      setQuests(quests.map(q => q.id === quest.id ? updatedQuest : q));
+      setQuests(quests.map((q) => (q.id === quest.id ? updatedQuest : q)));
     } catch (err) {
       console.error('Failed to toggle quest completion:', err);
     }
   };
 
-  if (loading) return <LoadingSpinner message="Loading story..." />;
+  if (loading) return <LoadingSpinner message="Loading quests..." />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
       <div className="p-6 space-y-6 text-white">
-        <h1 className="text-3xl text-yellow-300">Story Editor</h1>
-
-        <div className="bg-gray-700 p-4 rounded">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-yellow-200 text-lg">Story Text</label>
-            <div className="flex items-center space-x-2">
-              {storyChanged && (
-                  <span className="text-yellow-400 text-sm italic">
-                * Unsaved changes
-              </span>
-              )}
-              {saveSuccess && (
-                  <span className="text-green-400 text-sm animate-pulse">
-                ✓ Saved successfully
-              </span>
-              )}
-              <button
-                  onClick={saveStory}
-                  disabled={saving || !storyChanged}
-                  className={`px-3 py-1 rounded transition-colors ${
-                      saving || !storyChanged
-                          ? 'bg-gray-500 cursor-not-allowed'
-                          : 'bg-yellow-600 hover:bg-yellow-700'
-                  }`}
-              >
-                {saving ? 'Saving...' : 'Save Story'}
-              </button>
-            </div>
-          </div>
-          <div className="relative bg-gray-600 rounded">
-          <textarea
-              ref={textareaRef}
-              value={story}
-              onChange={(e) => setStory(e.target.value)}
-              className="w-full min-h-40 p-3 bg-gray-600 text-white rounded resize-none overflow-hidden"
-              placeholder="Write your campaign story here..."
-          />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-              {story.length} characters
-            </div>
-          </div>
-          <div className="mt-2 flex justify-between text-sm text-gray-400">
-            <div>
-              Use markdown for formatting: **bold**, *italic*, # Heading
-            </div>
-            <button
-                className="text-yellow-400 hover:underline"
-                onClick={() => {
-                  if (textareaRef.current) {
-                    textareaRef.current.focus();
-                  }
-                }}
-            >
-              Focus editor
-            </button>
-          </div>
-        </div>
-
         <div className="bg-gray-700 p-4 rounded space-y-2">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl text-yellow-200">Quests</h2>
-            <span className="text-sm text-gray-400">
-            {quests.length} {quests.length === 1 ? 'quest' : 'quests'} total
-          </span>
-          </div>
+          <h2 className="text-xl text-yellow-200">Quests</h2>
+          <span className="text-sm text-gray-400">
+          {quests.length} {quests.length === 1 ? 'quest' : 'quests'} total
+        </span>
 
           <ul className="space-y-1">
             {quests.length > 0 ? (
-                quests.map(q => (
+                quests.map((q) => (
                     <li
                         key={q.id}
                         className={`bg-gray-600 p-2 rounded flex justify-between items-start ${
@@ -314,11 +214,15 @@ export default function Quests() {
                             <div className="flex-grow">
                               <div className="flex items-center">
                                 <strong>{q.title}</strong>
-                                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                                    q.type === 'Main' ? 'bg-blue-800 text-blue-200' :
-                                        q.type === 'Side' ? 'bg-purple-800 text-purple-200' :
-                                            'bg-green-800 text-green-200'
-                                }`}>
+                                <span
+                                    className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                                        q.type === 'Main'
+                                            ? 'bg-blue-800 text-blue-200'
+                                            : q.type === 'Side'
+                                                ? 'bg-purple-800 text-purple-200'
+                                                : 'bg-green-800 text-green-200'
+                                    }`}
+                                >
                           {q.type}
                         </span>
                               </div>
@@ -329,7 +233,7 @@ export default function Quests() {
                                     className={`w-4 h-4 rounded-full mr-1 cursor-pointer ${
                                         q.completion ? 'bg-green-500' : 'bg-gray-500'
                                     }`}
-                                    title={q.completion ? "Mark as incomplete" : "Mark as complete"}
+                                    title={q.completion ? 'Mark as incomplete' : 'Mark as complete'}
                                 ></button>
                                 <span className="text-xs text-gray-400">
                           {q.completion ? 'Completed' : 'Incomplete'}

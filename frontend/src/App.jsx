@@ -6,6 +6,8 @@ import Items from './components/Items';
 import Bestiary from './components/Bestiary';
 import Quests from './components/Quests';
 import Location from './components/Location';
+import NPCs from "./components/NPCs";
+import Spells from "./components/Spells";
 
 export default function App() {
     return (
@@ -19,6 +21,8 @@ export default function App() {
                     <Route path="/items" element={<Items />} />
                     <Route path="/bestiary" element={<Bestiary />} />
                     <Route path="/quests" element={<Quests />} />
+                    <Route path="/npcs" element={<NPCs />} />
+                    <Route path="/spells" element={<Spells />} />
                 </Routes>
             </main>
         </div>

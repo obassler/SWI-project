@@ -97,6 +97,10 @@ export const api = {
 
     // Spells
     getSpells: () => fetchApi('/spells'),
+    createSpell: (spell) => fetchApi('/spells', {
+        method: 'POST',
+        body: JSON.stringify(spell)
+    }),
 
     // Monsters
     getMonsters: () => fetchApi('/monsters'),
@@ -149,13 +153,6 @@ export const api = {
     }),
     deleteQuest: (id) => fetchApi(`/quests/${id}`, {
         method: 'DELETE'
-    }),
-
-    // Story
-    getStory: () => fetchApi('/story'),
-    updateStory: (story) => fetchApi('/story', {
-        method: 'PUT',
-        body: JSON.stringify(story)
     }),
 
     // Extra functionality

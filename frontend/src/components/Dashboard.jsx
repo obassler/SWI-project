@@ -5,6 +5,7 @@ import { api } from '../api';
 export default function Dashboard() {
   const [characters, setCharacters] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [quests, setQuests] = useState([]);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState(() => {
     const saved = localStorage.getItem('selectedCharacterIds');
     return saved ? JSON.parse(saved) : [];
@@ -24,12 +25,15 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [charData, locData] = await Promise.all([
+        const [charData, locData, questData] = await Promise.all([
           api.getCharacters(),
-          api.getLocation()
+          api.getLocation(),
+          api.getQuests(),
         ]);
         setCharacters(charData);
         setLocations(locData);
+        setQuests(questData);
+
         if (selectedLocationId) {
           const selectedLoc = locData.find(loc => loc.id === selectedLocationId);
           setCombatMonsters(selectedLoc?.monstersInLocation || []);
@@ -41,8 +45,10 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [selectedLocationId]);
+
 
   useEffect(() => {
     localStorage.setItem('selectedCharacterIds', JSON.stringify(selectedCharacterIds));
@@ -53,6 +59,14 @@ export default function Dashboard() {
       localStorage.setItem('selectedLocationId', selectedLocationId);
     }
   }, [selectedLocationId]);
+
+  // Load quests from localStorage if available
+  useEffect(() => {
+    const savedQuests = localStorage.getItem('quests');
+    if (savedQuests) {
+      setQuests(JSON.parse(savedQuests));
+    }
+  }, []);
 
   const handleCharacterSelect = (e) => {
     const id = parseInt(e.target.value);
@@ -90,7 +104,33 @@ export default function Dashboard() {
         selectedCharacterIds.includes(c.id) ? { ...c, currentHp: c.maxHp } : c
     );
     setCharacters(healed);
+    localStorage.setItem('characters', JSON.stringify(healed));
   };
+
+  useEffect(() => {
+    const savedCharacters = localStorage.getItem('characters');
+    if (savedCharacters) {
+      setCharacters(JSON.parse(savedCharacters));
+    }
+  }, []);
+
+  const handleQuestCompletion = (questId) => {
+    const updatedQuests = quests.map((quest) =>
+        quest.id === questId ? { ...quest, completion: true } : quest
+    );
+    setQuests(updatedQuests);
+    localStorage.setItem('quests', JSON.stringify(updatedQuests));
+  };
+
+
+  useEffect(() => {
+    const savedQuests = localStorage.getItem('quests');
+    if (savedQuests) {
+      setQuests(JSON.parse(savedQuests));
+    }
+  }, []);
+
+
 
   const selectedCharacters = characters.filter(char => selectedCharacterIds.includes(char.id));
   const selectedLocation = locations.find(l => l.id === selectedLocationId);
@@ -105,6 +145,7 @@ export default function Dashboard() {
             <p className="text-red-500">{error}</p>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Character and Location Select Section */}
               <div className="bg-gray-700 p-4 rounded">
                 <h2 className="text-xl text-yellow-200 mb-2">Select Party (max 5)</h2>
                 <select
@@ -151,9 +192,10 @@ export default function Dashboard() {
                 </ul>
               </div>
 
+              {/* Location Select Section */}
               <div className="bg-gray-700 p-4 rounded">
                 <select
-                    value={selectedLocationId || ''}U
+                    value={selectedLocationId || ''}
                     onChange={handleLocationSelect}
                     className="w-full p-2 bg-gray-600 text-white rounded"
                 >
@@ -169,49 +211,84 @@ export default function Dashboard() {
                           <>
                             <h3 className="text-yellow-200 mt-2 font-semibold">Monsters:</h3>
                             <ul className="list-disc pl-5 text-sm">
-                              {selectedLocation.monstersInLocation.map(mil => (
-                                  <li key={mil.id} className={mil.monster?.isBoss ? 'text-red-400 font-bold' : 'text-gray-300'}>
-                                    {mil.monster?.name} (x{mil.quantity}){mil.monster?.isBoss ? ' (BOSS)' : ''}
-                                  </li>
-                              ))}
+                              {selectedLocation.monstersInLocation
+                                  .sort((a, b) => b.monster?.boss - a.monster?.boss) // Sort monsters with bosses first
+                                  .map(mil => {
+                                    const isBoss = mil.monster?.boss;
+
+                                    return (
+                                        <li
+                                            key={mil.id}
+                                            className={isBoss ? 'text-red-400 font-bold' : 'text-gray-300'}
+                                        >
+                                          {mil.monster?.name} (x{mil.quantity}){isBoss ? ' (BOSS)' : ''}
+                                        </li>
+                                    );
+                                  })}
                               {hostileNpcs.map(npc => (
                                   <li key={npc.id} className="text-red-300">{npc.name} (Hostile NPC)</li>
                               ))}
                             </ul>
+
                           </>
                       )}
                     </div>
                 )}
               </div>
 
-              {selectedLocation && (
-                  <div className="bg-gray-700 p-4 rounded col-span-1 md:col-span-2">
-                    <h2 className="text-xl text-yellow-200 mb-2">NPCs in Location</h2>
-                    {npcsInLocation.length > 0 ? (
-                        <ul className="space-y-2 text-sm text-gray-200">
-                          {npcsInLocation.map(npc => (
-                              <li key={npc.id} className="bg-gray-800 p-2 rounded flex justify-between items-center">
-                                <div>
-                                  <strong>{npc.name}</strong> – {npc.role}
-                                  {npc.description && <div className="text-xs text-gray-400 italic">"{npc.description}"</div>}
-                                </div>
-                                <label className="flex items-center gap-2 text-sm">
-                                  <input
-                                      type="checkbox"
-                                      checked={hostileNpcIds.includes(npc.id)}
-                                      onChange={() => toggleNpcHostility(npc.id)}
-                                  />
-                                  Hostile
-                                </label>
-                              </li>
-                          ))}
-                        </ul>
-                    ) : (
-                        <p className="text-gray-400">No NPCs in this area.</p>
-                    )}
-                  </div>
-              )}
+              {/* NPCs in Location Section */}
+              <div className="bg-gray-700 p-4 rounded col-span-1 md:col-span-2">
+                <h2 className="text-xl text-yellow-200 mb-2">NPCs in Location</h2>
+                {npcsInLocation.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-200">
+                      {npcsInLocation.map(npc => (
+                          <li key={npc.id} className="bg-gray-800 p-2 rounded flex justify-between items-center">
+                            <div>
+                              <strong>{npc.name}</strong> – {npc.role}
+                              {npc.description && <div className="text-xs text-gray-400 italic">"{npc.description}"</div>}
+                            </div>
+                            <label className="flex items-center gap-2 text-sm">
+                              <input
+                                  type="checkbox"
+                                  checked={hostileNpcIds.includes(npc.id)}
+                                  onChange={() => toggleNpcHostility(npc.id)}
+                              />
+                              Hostile
+                            </label>
+                          </li>
+                      ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-400">No NPCs in this area.</p>
+                )}
+              </div>
 
+              {/* Active Quests Section */}
+              <div className="bg-gray-700 p-4 rounded col-span-1 md:col-span-2">
+                <h2 className="text-xl text-yellow-200 mb-2">Active Quests</h2>
+                {quests.length > 0 ? (
+                    <ul className="space-y-2 text-sm text-gray-200">
+                      {quests.map((quest) => (
+                          <li key={quest.id} className="bg-gray-800 p-2 rounded flex justify-between items-center">
+                            <div>
+                              <strong>{quest.title}</strong> – {quest.type}
+                              <div className="text-xs text-gray-400">{quest.description}</div>
+                            </div>
+                            <button
+                                onClick={() => handleQuestCompletion(quest.id)}
+                                disabled={quest.completion}
+                                className={`px-2 py-1 ${quest.completion ? 'bg-gray-500' : 'bg-green-600'} rounded`}
+                            >
+                              {quest.completion ? 'Completed' : 'Mark as Completed'}
+                            </button>
+                          </li>
+                      ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-400">No active quests.</p>
+                )}
+              </div>
+              {/* Quick Actions Section */}
               <div className="bg-gray-700 p-4 rounded">
                 <h2 className="text-xl text-yellow-200 mb-2">Quick Actions</h2>
                 <div className="mb-2">
