@@ -66,6 +66,14 @@ export const api = {
     deleteCharacter: (id) => fetchApi(`/characters/${id}`, {
         method: 'DELETE'
     }),
+    healCharacter: (id) => fetchApi(`/characters/${id}/heal`, {
+        method: 'PUT'
+    }),
+
+    healParty: (characterIds) => fetchApi('/characters/heal-batch', {
+        method: 'PUT',
+        body: JSON.stringify(characterIds)
+    }),
 
     assignItemToCharacter: (characterId, itemId) =>
         fetchApi(`/characters/${characterId}/items/${itemId}`, { method: 'POST' }),
