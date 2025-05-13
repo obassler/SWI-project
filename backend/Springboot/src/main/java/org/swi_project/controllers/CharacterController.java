@@ -39,6 +39,22 @@ public class CharacterController {
         return characterRepository.save(character);
     }
 
+    @PutMapping("/{id}/heal")
+    public Character healCharacter(@PathVariable int id) {
+        Character character = characterRepository.findById(id).orElseThrow();
+        character.setCurrentHp(character.getMaxHp());
+        return characterRepository.save(character);
+    }
+
+    @PutMapping("/heal-batch")
+    public List<Character> healParty(@RequestBody List<Integer> characterIds) {
+        List<Character> characters = characterRepository.findAllById(characterIds);
+        for (Character character : characters) {
+            character.setCurrentHp(character.getMaxHp());
+        }
+        return characterRepository.saveAll(characters);
+    }
+
     @DeleteMapping("/{id}")
     public void deleteCharacter(@PathVariable int id) {
         characterRepository.deleteById(id);

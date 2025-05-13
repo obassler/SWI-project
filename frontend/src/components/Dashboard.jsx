@@ -85,11 +85,18 @@ export default function Dashboard() {
     setDiceResult(`Rolled a ${diceType}: ${result}`);
   };
 
-  const healParty = () => {
-    const healed = characters.map(c =>
-        selectedCharacterIds.includes(c.id) ? { ...c, currentHp: c.maxHp } : c
-    );
-    setCharacters(healed);
+  const healParty = async () => {
+    try {
+      const healed = await api.healParty(selectedCharacterIds);
+      setCharacters(prev =>
+          prev.map(c => {
+            const healedChar = healed.find(h => h.id === c.id);
+            return healedChar ? healedChar : c;
+          })
+      );
+    } catch (err) {
+      console.error('Failed to heal party', err);
+    }
   };
 
   const selectedCharacters = characters.filter(char => selectedCharacterIds.includes(char.id));
@@ -153,7 +160,7 @@ export default function Dashboard() {
 
               <div className="bg-gray-700 p-4 rounded">
                 <select
-                    value={selectedLocationId || ''}U
+                    value={selectedLocationId || ''}
                     onChange={handleLocationSelect}
                     className="w-full p-2 bg-gray-600 text-white rounded"
                 >
