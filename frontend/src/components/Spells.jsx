@@ -1,187 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 
 export default function Spells() {
     const [spells, setSpells] = useState([]);
-    const [formData, setFormData] = useState({
-        name: '',
-        description: '',
-        type: '',
-        level: 1
-    });
-    const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [submitLoading, setSubmitLoading] = useState(false);
     const [error, setError] = useState(null);
-    const navigate = useNavigate();
+    const [newSpell, setNewSpell] = useState({
+        name: '', description: '', type: '', level: '',
+    });
+    const [editingSpellId, setEditingSpellId] = useState(null);
 
-    useEffect(() => {
-        const fetchSpells = async () => {
-            try {
-                const spellData = await api.getSpells();
-                setSpells(spellData || []);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching spells:', err);
-                setError('Failed to load spells');
-                setLoading(false);
-            }
-        };
-        fetchSpells();
-    }, []);
+    useEffect(() => { fetchSpells(); }, []);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'level' ? parseInt(value) : value
-        }));
+    const fetchSpells = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSpells();
+            setSpells(data);
+        } catch (err) {
+            setError('Failed to load spells');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setSubmitLoading(true);
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setNewSpell(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    };
 
-        console.log('Form data being submitted:', formData);
-
+    const saveSpell = async () => {
+        const payload = {
+            ...newSpell,
+        };
         try {
-            // Check if all fields are filled
-            if (!formData.name || !formData.description || !formData.type || !formData.level) {
-                throw new Error('All fields are required');
-            }
-
-            // Call the API to create the spell
-            const newSpell = await api.createSpell({
-                name: formData.name,
-                description: formData.description,
-                type: formData.type,
-                level: formData.level
-            });
-
-            if (newSpell) {
-                console.log('Spell created successfully:', newSpell);
-
-                // Update spells list with the new spell
-                setSpells(prev => [...prev, newSpell]);
-
-                // Reset form data
-                setFormData({
-                    name: '',
-                    description: '',
-                    type: '',
-                    level: 1
-                });
-                setShowForm(false);
-            } else {
-                throw new Error('Failed to create spell');
-            }
+            const res = editingSpellId
+                ? await api.updateSpell(editingSpellId, payload)
+                : await api.createSpell(payload);
+            await fetchSpells();
+            setNewSpell({ name: '', description: '', type: '', level: ''});
+            setEditingSpellId(null);
         } catch (err) {
-            console.error('Error creating spell:', err);
-            setError(`Failed to create spell: ${err.message || 'Please try again'}`);
-        } finally {
-            setSubmitLoading(false);
+            setError('Failed to save spell');
+        }
+    };
+
+    const deleteSpell = async (id) => {
+        try {
+            await api.deleteSpell(id);
+            fetchSpells();
+        } catch {
+            setError('Failed to delete spell');
         }
     };
 
     return (
-        <div className="p-4">
-            <button
-                onClick={() => setShowForm(!showForm)}
-                className="mb-4 px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
-            >
-                {showForm ? 'Hide Create Form' : 'Create New Spell'}
-            </button>
-            {showForm && (
-                <form onSubmit={handleSubmit} className="bg-gray-700 p-6 rounded space-y-4 mb-6">
-                    <div>
-                        <label className="block text-gray-300 mb-1">Name (max 25 characters)</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            maxLength="25"
-                            required
-                            className="w-full p-2 bg-gray-600 text-white rounded"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-gray-300 mb-1">Description (max 200 characters)</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleInputChange}
-                            maxLength="200"
-                            required
-                            className="w-full p-2 bg-gray-600 text-white rounded"
-                            rows="4"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-gray-300 mb-1">Type (max 25 characters)</label>
-                        <input
-                            type="text"
-                            name="type"
-                            value={formData.type}
-                            onChange={handleInputChange}
-                            maxLength="25"
-                            required
-                            className="w-full p-2 bg-gray-600 text-white rounded"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-gray-300 mb-1">Level (1-9)</label>
-                        <input
-                            type="number"
-                            name="level"
-                            value={formData.level}
-                            onChange={handleInputChange}
-                            min="1"
-                            max="9"
-                            required
-                            className="w-full p-2 bg-gray-600 text-white rounded"
-                        />
-                    </div>
-                    <div className="flex gap-4">
-                        <button
-                            type="submit"
-                            disabled={submitLoading}
-                            className={`px-4 py-2 bg-green-600 rounded hover:bg-green-700 ${submitLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            {submitLoading ? 'Creating...' : 'Create Spell'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setShowForm(false)}
-                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
-                        >
-                            Cancel
-                        </button>
-                    </div>
-                    {error && <p className="text-red-500 mt-2">{error}</p>}
-                </form>
-            )}
-            {loading ? (
-                <p className="text-yellow-300">Loading spells...</p>
-            ) : error ? (
-                <p className="text-red-500">{error}</p>
-            ) : spells.length === 0 ? (
-                <p className="text-gray-400">No spells found.</p>
-            ) : (
-                <ul className="space-y-2 text-sm text-gray-200">
-                    {spells.map(spell => (
-                        <li key={spell.id} className="bg-gray-800 p-2 rounded">
-                            <strong>{spell.name}</strong> – {spell.type}
-                            {spell.description && (
-                                <div className="text-xs text-gray-400 italic">"{spell.description}"</div>
-                            )}
-                            <div className="text-xs text-gray-400">Level: {spell.level}</div>
-                        </li>
-                    ))}
-                </ul>
-            )}
+        <div className="p-4 space-y-6 text-white">
+
+            <div className="bg-gray-700 p-4 rounded space-y-2">
+                <h2 className="text-xl text-yellow-200">{editingSpellId ? 'Edit Spell' : 'Add New Spell'}</h2>
+                {["name", "description", "type"].map(field => (
+                    <input key={field} name={field} value={newSpell[field]} onChange={handleInputChange} placeholder={field}
+                           className="w-full p-2 rounded bg-gray-600 text-white" />
+                ))}
+                {["level"].map(field => (
+                    <input key={field} type="number" name={field} value={newSpell[field]} onChange={handleInputChange} placeholder={field.toUpperCase()}
+                           className="w-full p-2 rounded bg-gray-600 text-white" />
+                ))}
+                <button onClick={saveSpell} className="bg-yellow-600 px-4 py-1 rounded hover:bg-yellow-700">Save</button>
+            </div>
+
+            <ul className="space-y-3">
+                {spells.map(spe => (
+                    <li key={spe.id} className="bg-gray-700 p-4 rounded">
+                        <h3 className="text-yellow-300 font-semibold">{spe.name}</h3>
+                        <p className="text-gray-300 text-sm">{spe.description}</p>
+                        <p className="text-gray-400 text-sm">Type: {spe.type}</p>
+                        <p className="text-gray-500 text-sm">Level: {spe.level}</p>
+                        <div className="flex gap-3 mt-2">
+                            <button onClick={() => { setEditingSpellId(spe.id); setNewSpell(spe); }} className="text-green-400 hover:text-green-600">✎</button>
+                            <button onClick={() => deleteSpell(spe.id)} className="text-red-400 hover:text-red-600">✕</button>
+                        </div>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 }

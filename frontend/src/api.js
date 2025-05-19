@@ -105,6 +105,17 @@ export const api = {
 
     // Spells
     getSpells: () => fetchApi('/spells'),
+    createSpell: (spell) => fetchApi('/spells', {
+        method: 'POST',
+        body: JSON.stringify(spell)
+    }),
+    updateSpell: (id, spell) => fetchApi(`/spells/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(spell)
+    }),
+    deleteSpell: (id) => fetchApi(`/spells/${id}`, {
+        method: 'DELETE'
+    }),
 
     // Monsters
     getMonsters: () => fetchApi('/monsters'),

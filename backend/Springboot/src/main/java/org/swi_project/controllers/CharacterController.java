@@ -43,6 +43,7 @@ public class CharacterController {
     public Character healCharacter(@PathVariable int id) {
         Character character = characterRepository.findById(id).orElseThrow();
         character.setCurrentHp(character.getMaxHp());
+        character.setStatus("Živý");
         return characterRepository.save(character);
     }
 
@@ -51,6 +52,7 @@ public class CharacterController {
         List<Character> characters = characterRepository.findAllById(characterIds);
         for (Character character : characters) {
             character.setCurrentHp(character.getMaxHp());
+            character.setStatus("Živý");
         }
         return characterRepository.saveAll(characters);
     }
