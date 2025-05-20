@@ -14,23 +14,24 @@ export default function NPCs() {
     const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [editingNpcId, setEditingNpcId] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const npcData = await api.getNpcs();
-                console.log("Fetched NPCs:", npcData);
-                setNpcs(npcData);
-                setLoading(false);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-                setError('Failed to load NPCs');
-                setLoading(false);
-            }
-        };
-        fetchData();
+        fetchNpcs();
     }, []);
+
+    const fetchNpcs = async () => {
+        try {
+            const npcData = await api.getNpcs();
+            setNpcs(npcData);
+            setLoading(false);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError('Failed to load NPCs');
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -45,46 +46,66 @@ export default function NPCs() {
         setError(null);
         setSubmitLoading(true);
 
-        console.log("Form data being submitted:", formData);
-
         try {
-            const newNPC = await api.createNpc({
-                name: formData.name,
-                role: formData.role,
-                description: formData.description,
-                hostility: formData.hostility
-            });
+            if (editingNpcId) {
+                await api.updateNpc(editingNpcId, formData);
+                setEditingNpcId(null);
+            } else {
+                const newNPC = await api.createNpc(formData);
+                setNpcs(prev => [...prev, newNPC]);
+            }
 
-            console.log("Created NPC:", newNPC);
-
-            setNpcs(prev => [...prev, newNPC]);
-            setFormData({
-                name: '',
-                role: '',
-                description: '',
-                hostility: false
-            });
+            setFormData({ name: '', role: '', description: '', hostility: false });
             setShowForm(false);
-            setSubmitLoading(false);
+            await fetchNpcs();
         } catch (err) {
-            console.error('Error creating NPC:', err);
-            setError('Failed to create NPC. Please try again.');
+            console.error('Error saving NPC:', err);
+            setError('Failed to save NPC. Please try again.');
+        } finally {
             setSubmitLoading(false);
+        }
+    };
+
+    const handleEdit = (npc) => {
+        setFormData({
+            name: npc.name,
+            role: npc.role,
+            description: npc.description,
+            hostility: npc.hostility
+        });
+        setEditingNpcId(npc.id);
+        setShowForm(true);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await api.deleteNpc(id);
+            await fetchNpcs();
+        } catch (err) {
+            console.error('Error deleting NPC:', err);
+            setError('Failed to delete NPC');
         }
     };
 
     return (
         <div className="p-4">
             <button
-                onClick={() => setShowForm(!showForm)}
+                onClick={() => {
+                    if (editingNpcId) {
+                        setEditingNpcId(null);
+                        setFormData({ name: '', role: '', description: '', hostility: false });
+                    }
+                    setShowForm(!showForm);
+                }}
                 className="mb-4 px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
             >
-                {showForm ? 'Hide Create Form' : 'Create New NPC'}
+                {showForm ? (editingNpcId ? 'Cancel Edit' : 'Hide Form') : 'Create New NPC'}
             </button>
+
             {showForm && (
                 <form onSubmit={handleSubmit} className="bg-gray-700 p-6 rounded space-y-4 mb-6">
                     <div>
-                        <label className="block text-gray-300 mb-1">Name (max 25 characters)</label>
+                        <label className="block text-gray-300 mb-1">Name</label>
                         <input
                             type="text"
                             name="name"
@@ -96,7 +117,7 @@ export default function NPCs() {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Role (max 25 characters)</label>
+                        <label className="block text-gray-300 mb-1">Role</label>
                         <input
                             type="text"
                             name="role"
@@ -108,7 +129,7 @@ export default function NPCs() {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Description (max 200 characters)</label>
+                        <label className="block text-gray-300 mb-1">Description</label>
                         <textarea
                             name="description"
                             value={formData.description}
@@ -135,11 +156,15 @@ export default function NPCs() {
                             disabled={submitLoading}
                             className={`px-4 py-2 bg-green-600 rounded hover:bg-green-700 ${submitLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            {submitLoading ? 'Creating...' : 'Create NPC'}
+                            {submitLoading ? (editingNpcId ? 'Updating...' : 'Creating...') : (editingNpcId ? 'Update NPC' : 'Create NPC')}
                         </button>
                         <button
                             type="button"
-                            onClick={() => setShowForm(false)}
+                            onClick={() => {
+                                setShowForm(false);
+                                setEditingNpcId(null);
+                                setFormData({ name: '', role: '', description: '', hostility: false });
+                            }}
                             className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500"
                         >
                             Cancel
@@ -148,6 +173,7 @@ export default function NPCs() {
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                 </form>
             )}
+
             {loading ? (
                 <p className="text-yellow-300">Loading NPCs...</p>
             ) : error ? (
@@ -157,13 +183,21 @@ export default function NPCs() {
             ) : (
                 <ul className="space-y-2 text-sm text-gray-200">
                     {npcs.map(npc => (
-                        <li key={npc.id} className="bg-gray-800 p-2 rounded">
-                            <strong>{npc.name}</strong> – {npc.role}
-                            {npc.description && (
-                                <div className="text-xs text-gray-400 italic">"{npc.description}"</div>
-                            )}
-                            <div className="text-xs text-gray-400">
-                                Hostility: {npc.hostility ? 'Hostile' : 'Non-hostile'}
+                        <li key={npc.id} className="bg-gray-800 p-3 rounded">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <strong>{npc.name}</strong> – {npc.role}
+                                    {npc.description && (
+                                        <div className="text-xs text-gray-400 italic">"{npc.description}"</div>
+                                    )}
+                                    <div className="text-xs text-gray-400">
+                                        Hostility: {npc.hostility ? 'Hostile' : 'Non-hostile'}
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 text-lg">
+                                    <button onClick={() => handleEdit(npc)} className="text-green-400 hover:text-green-600">✎</button>
+                                    <button onClick={() => handleDelete(npc.id)} className="text-red-400 hover:text-red-600">✕</button>
+                                </div>
                             </div>
                         </li>
                     ))}

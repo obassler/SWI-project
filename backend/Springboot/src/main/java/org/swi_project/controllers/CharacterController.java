@@ -33,11 +33,32 @@ public class CharacterController {
 
     @PutMapping("/{id}")
     public Character updateCharacter(@PathVariable int id, @RequestBody Character updatedCharacter) {
-        Character character = characterRepository.findById(id).orElseThrow();
+        Character character = characterRepository.findById(id).orElseThrow(() -> new RuntimeException("Character not found"));
+
         character.setName(updatedCharacter.getName());
         character.setLevel(updatedCharacter.getLevel());
+        character.setRace(updatedCharacter.getRace());
+        character.setCharacterClass(updatedCharacter.getCharacterClass());
+        character.setStatus(updatedCharacter.getStatus());
+        character.setBackground(updatedCharacter.getBackground());
+        character.setAlignment(updatedCharacter.getAlignment());
+        character.setSpecialization(updatedCharacter.getSpecialization());
+        character.setNotes(updatedCharacter.getNotes());
+        character.setStrength(updatedCharacter.getStrength());
+        character.setDexterity(updatedCharacter.getDexterity());
+        character.setConstitution(updatedCharacter.getConstitution());
+        character.setIntelligence(updatedCharacter.getIntelligence());
+        character.setWisdom(updatedCharacter.getWisdom());
+        character.setCharisma(updatedCharacter.getCharisma());
+
+        character.setCurrentHp(updatedCharacter.getCurrentHp());
+        character.setMaxHp(updatedCharacter.getMaxHp());
+        character.setItems(updatedCharacter.getItems());
+        character.setSpells(updatedCharacter.getSpells());
+
         return characterRepository.save(character);
     }
+
 
     @PutMapping("/{id}/heal")
     public Character healCharacter(@PathVariable int id) {

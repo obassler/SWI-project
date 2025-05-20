@@ -20,6 +20,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 new AntPathRequestMatcher("/api/auth/**"),
                                 new AntPathRequestMatcher("/api/characters/**"),
+                                new AntPathRequestMatcher("/api/characters"),
                                 new AntPathRequestMatcher("/api/npcs/**"),
                                 new AntPathRequestMatcher("/api/stories/**"),
                                 new AntPathRequestMatcher("/api/quests/**"),

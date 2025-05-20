@@ -8,6 +8,7 @@ import Quests from './components/Quests';
 import Location from './components/Location';
 import NPCs from "./components/NPCs";
 import Spells from "./components/Spells";
+import CharacterManager  from "./components/Character";
 
 export default function App() {
     return (
@@ -16,6 +17,7 @@ export default function App() {
             <main className="flex-1 p-4 overflow-auto">
                 <Routes>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/characters" element={<CharacterManager />} />
                     <Route path="/characters/:id" element={<CharacterDetail />} />
                     <Route path="/locations" element={<Location />} />
                     <Route path="/items" element={<Items />} />

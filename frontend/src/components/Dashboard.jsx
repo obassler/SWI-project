@@ -7,7 +7,8 @@ export default function Dashboard() {
   const [locations, setLocations] = useState([]);
   const [selectedCharacterIds, setSelectedCharacterIds] = useState(() => {
     const saved = localStorage.getItem('selectedCharacterIds');
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    return parsed.filter(id => id !== null && id !== undefined);
   });
   const [selectedLocationId, setSelectedLocationId] = useState(() => {
     const saved = localStorage.getItem('selectedLocationId');
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
+
     const fetchData = async () => {
       try {
         const [charData, locData] = await Promise.all([
@@ -56,10 +58,12 @@ export default function Dashboard() {
 
   const handleCharacterSelect = (e) => {
     const id = parseInt(e.target.value);
+    console.log('Selecting char id:', id, 'current selected:', selectedCharacterIds);
     if (!selectedCharacterIds.includes(id) && selectedCharacterIds.length < 5) {
       setSelectedCharacterIds([...selectedCharacterIds, id]);
     }
   };
+
 
   const handleCharacterRemove = (id) => {
     setSelectedCharacterIds(prev => prev.filter(charId => charId !== id));
@@ -103,7 +107,7 @@ export default function Dashboard() {
   const selectedLocation = locations.find(l => l.id === selectedLocationId);
   const npcsInLocation = selectedLocation?.npcs || [];
   const hostileNpcs = npcsInLocation.filter(npc => hostileNpcIds.includes(npc.id));
-
+  console.log('selectedCharacterIds:', selectedCharacterIds);
   return (
       <div className="space-y-6 p-4">
         {loading ? (
@@ -114,10 +118,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-700 p-4 rounded">
                 <h2 className="text-xl text-yellow-200 mb-2">Select Party (max 5)</h2>
-                <select
-                    onChange={handleCharacterSelect}
-                    className="w-full p-2 bg-gray-600 text-white rounded mb-2"
-                >
+                <select onChange={handleCharacterSelect} className="w-full p-2 bg-gray-600 text-white rounded mb-2">
                   <option value="">Select character to add</option>
                   {characters.map(char => (
                       <option
@@ -129,7 +130,8 @@ export default function Dashboard() {
                       </option>
                   ))}
                 </select>
-                <ul className="space-y-2 text-sm">
+
+                <ul className="space-y-2 text-sm text-gray-300">
                   {selectedCharacters.map((char) => (
                       <li
                           key={char.id}
@@ -156,6 +158,15 @@ export default function Dashboard() {
                       </li>
                   ))}
                 </ul>
+                <button
+                    onClick={() => {
+                      setSelectedCharacterIds([]);
+                      localStorage.removeItem('selectedCharacterIds');
+                    }}
+                    className="px-3 py-1 bg-red-600 rounded hover:bg-red-700 mt-4"
+                >
+                  Unselect All
+                </button>
               </div>
 
               <div className="bg-gray-700 p-4 rounded">

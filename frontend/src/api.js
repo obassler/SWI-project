@@ -6,7 +6,7 @@ const API_BASE_URL =
 const getAuthToken = () => localStorage.getItem('token');
 
 async function fetchApi(endpoint, options = {}) {
-    const { method = 'GET', body, headers = {}, ...rest } = options;
+    const { method = 'GET', body, headers = {}, withCredentials = true, ...rest } = options;
     const token = getAuthToken();
 
     const fullHeaders = {
@@ -15,11 +15,16 @@ async function fetchApi(endpoint, options = {}) {
         ...headers
     };
 
+    console.log(`Making ${method} request to ${API_BASE_URL}${endpoint}`, {
+        headers: fullHeaders,
+        withCredentials
+    });
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method,
         headers: fullHeaders,
         body,
-        credentials: 'include',
+        credentials: withCredentials ? 'include' : 'same-origin',
         ...rest
     });
 
@@ -87,9 +92,6 @@ export const api = {
             body: JSON.stringify({ itemId, equip })
         }),
 
-    assignSpellToCharacter: (characterId, spellId) =>
-        fetchApi(`/characters/${characterId}/spells/${spellId}`, { method: 'POST' }),
-
     // Items
     getItems: () => fetchApi('/items'),
     getItem: (id) => fetchApi(`/items/${id}`),
@@ -105,10 +107,26 @@ export const api = {
 
     // Spells
     getSpells: () => fetchApi('/spells'),
+    getSpell: (id) => fetchApi(`/spells/${id}`),
     createSpell: (spell) => fetchApi('/spells', {
         method: 'POST',
         body: JSON.stringify(spell)
     }),
+    updateSpell: (id, spell) => {
+        console.log(`Updating spell ${id} with data:`, spell);
+        return fetchApi(`/spells/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(spell)
+        });
+    },
+    deleteSpell: (id) => {
+        console.log(`Deleting spell ${id}`);
+        return fetchApi(`/spells/${id}`, {
+            method: 'DELETE'
+        });
+    },
+    assignSpellToCharacter: (characterId, spellId) =>
+        fetchApi(`/characters/${characterId}/spells/${spellId}`, { method: 'POST' }),
 
     // Monsters
     getMonsters: () => fetchApi('/monsters'),

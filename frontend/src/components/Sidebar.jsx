@@ -7,12 +7,13 @@ const links = [
     { to:'/bestiary', label:'Bestiary'  },
     { to:'/quests',    label:'Quests'   },
     { to:'/npcs',      label:'NPCs'     },
-    { to:'/spells',    label:'Spells'   }
+    { to:'/spells',    label:'Spells'   },
+    { to:'/characters',label:'Characters'}
 ]
 
 export default function Sidebar() {
     return (
-        <nav className="w-48 bg-gray-800 p-4 space-y-2">
+        <nav className="w-48 bg-gray-800 p-4 space-y-2 text-yellow-200">
             {links.map(l=>(
                 <NavLink
                     key={l.to}

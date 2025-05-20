@@ -40,17 +40,18 @@ public class NPCController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NPC> updateNPC(@PathVariable int id, @RequestBody NPC npcDetails) {
-        Optional<NPC> npc = npcRepository.findById(id);
-        if (npc.isPresent()) {
-            NPC existingNPC = npc.get();
-            existingNPC.setName(npcDetails.getName());
-
-            return ResponseEntity.ok(npcRepository.save(existingNPC));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<NPC> updateNpc(@PathVariable int id, @RequestBody NPC updatedNpc) {
+        return npcRepository.findById(id)
+                .map(npc -> {
+                    npc.setName(updatedNpc.getName());
+                    npc.setRole(updatedNpc.getRole());
+                    npc.setDescription(updatedNpc.getDescription());
+                    npc.setHostility(updatedNpc.isHostility());
+                    return ResponseEntity.ok(npcRepository.save(npc));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNPC(@PathVariable int id) {

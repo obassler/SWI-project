@@ -6,6 +6,7 @@ export default function Location() {
   const [monsters, setMonsters] = useState([]);
   const [npcs, setNpcs] = useState([]);
   const [editingLocation, setEditingLocation] = useState(null);
+  const [creatingLocation, setCreatingLocation] = useState(false); // New state for creating a location
   const [formData, setFormData] = useState({
     name: '', description: '', npcIds: [], monsterQuantities: {}
   });
@@ -39,8 +40,14 @@ export default function Location() {
     });
   };
 
+  const handleCreateClick = () => {
+    setCreatingLocation(true);
+    setFormData({ name: '', description: '', npcIds: [], monsterQuantities: {} });
+  };
+
   const handleCancel = () => {
     setEditingLocation(null);
+    setCreatingLocation(false); // Reset creating state
     setFormData({ name: '', description: '', npcIds: [], monsterQuantities: {} });
   };
 
@@ -91,10 +98,95 @@ export default function Location() {
     }
   };
 
+  const handleAddLocation = async () => {
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        npcs: formData.npcIds.map(id => ({ id })),
+        monstersInLocation: Object.entries(formData.monsterQuantities)
+            .filter(([_, qty]) => qty > 0)
+            .map(([monsterId, quantity]) => ({
+              monster: { id: parseInt(monsterId) },
+              quantity
+            }))
+      };
+      await api.createLocation(payload); // Assuming the API has a createLocation method
+      await fetchData();
+      handleCancel();
+    } catch (err) {
+      console.error('Failed to add location:', err);
+    }
+  };
+
   return (
       <div className="p-4 space-y-6 text-white">
         <div className="bg-gray-700 p-4 rounded space-y-4">
           <h2 className="text-xl text-yellow-200">All Locations</h2>
+
+          <button
+              onClick={handleCreateClick}
+              className="bg-green-600 px-4 py-1 rounded hover:bg-green-700 text-black"
+          >
+            Add New Location
+          </button>
+
+          {creatingLocation && (
+              <div className="space-y-2 mt-4">
+                <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Location Name"
+                    className="w-full p-2 rounded bg-gray-600 text-white"
+                />
+                <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Description"
+                    className="w-full p-2 rounded bg-gray-600 text-white"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-yellow-300 font-semibold mb-1">Monsters</h3>
+                    {monsters.map(mon => (
+                        <label key={mon.id} className="block text-sm">
+                          {mon.name}
+                          <input
+                              type="number"
+                              min="0"
+                              value={formData.monsterQuantities[mon.id] || ''}
+                              onChange={(e) => handleMonsterQuantityChange(mon.id, e.target.value)}
+                              className="w-20 ml-2 px-2 py-1 bg-gray-600 text-white rounded"
+                          />
+                        </label>
+                    ))}
+                  </div>
+                  <div>
+                    <h3 className="text-yellow-300 font-semibold mb-1">NPCs</h3>
+                    {npcs.map(npc => (
+                        <label key={npc.id} className="block text-sm">
+                          <input
+                              type="checkbox"
+                              value={npc.id}
+                              checked={formData.npcIds.includes(npc.id)}
+                              onChange={handleNpcCheckboxChange}
+                              className="mr-2"
+                          />
+                          {npc.name}
+                        </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-2">
+                  <button onClick={handleAddLocation} className="bg-yellow-600 px-4 py-1 rounded hover:bg-yellow-700 text-black">Add Location</button>
+                  <button onClick={handleCancel} className="bg-gray-600 px-4 py-1 rounded hover:bg-gray-500">Cancel</button>
+                </div>
+              </div>
+          )}
 
           {locations.map(location => (
               <div key={location.id} className="bg-gray-800 p-4 rounded">
@@ -118,35 +210,35 @@ export default function Location() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h3 className="text-yellow-300 font-semibold mb-1">Monsters</h3>
-                          {monsters.map(mon => (
-                              <label key={mon.id} className="block text-sm">
-                                {mon.name}
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={formData.monsterQuantities[mon.id] || ''}
-                                    onChange={(e) => handleMonsterQuantityChange(mon.id, e.target.value)}
-                                    className="w-20 ml-2 px-2 py-1 bg-gray-600 text-white rounded"
-                                />
-                              </label>
-                          ))}
+                          <div className="mt-4 flex flex-col gap-4">
+                            {monsters.map((mon) => (
+                                <div key={mon.id} className="flex items-center">
+                                  <label className="w-32 text-sm">{mon.name}</label>
+                                  <input
+                                      type="number"
+                                      min="0"
+                                      value={formData.monsterQuantities[mon.id] || ''}
+                                      onChange={(e) => handleMonsterQuantityChange(mon.id, e.target.value)}
+                                      className="w-20 px-1 py-1 bg-gray-600 text-white rounded"
+                                  />
+                                </div>
+                            ))}
+                          </div>
                         </div>
                         <div>
                           <h3 className="text-yellow-300 font-semibold mb-1">NPCs</h3>
-                          {npcs
-                              .filter(n => !n.location || n.location.id === editingLocation)
-                              .map(npc => (
-                                  <label key={npc.id} className="block text-sm">
-                                    <input
-                                        type="checkbox"
-                                        value={npc.id}
-                                        checked={formData.npcIds.includes(npc.id)}
-                                        onChange={handleNpcCheckboxChange}
-                                        className="mr-2"
-                                    />
-                                    {npc.name}
-                                  </label>
-                              ))}
+                          {npcs.filter(n => !n.location || n.location.id === editingLocation).map(npc => (
+                              <label key={npc.id} className="block text-sm">
+                                <input
+                                    type="checkbox"
+                                    value={npc.id}
+                                    checked={formData.npcIds.includes(npc.id)}
+                                    onChange={handleNpcCheckboxChange}
+                                    className="mr-2"
+                                />
+                                {npc.name}
+                              </label>
+                          ))}
                         </div>
                       </div>
 
