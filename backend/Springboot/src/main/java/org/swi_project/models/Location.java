@@ -32,5 +32,5 @@ public class Location {
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<NPC> npcs;
+    private List<NPC> npcs = new ArrayList<>();
 }

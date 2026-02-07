@@ -1,29 +1,24 @@
 package org.swi_project.controllers;
 
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import java.util.List;
-import java.util.Optional;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.swi_project.exception.ResourceNotFoundException;
 import org.swi_project.models.Item;
-import org.swi_project.models.Character;
 import org.swi_project.repositories.ItemRepository;
-import org.swi_project.repositories.CharacterRepository;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/items")
+@RequiredArgsConstructor
+@Slf4j
 public class ItemController {
 
     private final ItemRepository itemRepository;
-    private final CharacterRepository characterRepository;
-
-    @Autowired
-    public ItemController(ItemRepository itemRepository, CharacterRepository characterRepository) {
-        this.itemRepository = itemRepository;
-        this.characterRepository = characterRepository;
-    }
 
     @GetMapping
     public List<Item> getAllItems() {
@@ -32,104 +27,45 @@ public class ItemController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Item> getItemById(@PathVariable int id) {
-        Optional<Item> item = itemRepository.findById(id);
-        return item.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return itemRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Item", id));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Item createItem(@RequestBody Item item) {
-        return itemRepository.save(item);
+    public ResponseEntity<Item> createItem(@Valid @RequestBody Item item) {
+        Item saved = itemRepository.save(item);
+        log.info("Created item: {}", saved.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Item> updateItem(@PathVariable int id, @RequestBody Item itemDetails) {
-        Optional<Item> item = itemRepository.findById(id);
-        if (item.isPresent()) {
-            Item existingItem = item.get();
-            existingItem.setName(itemDetails.getName());
-            existingItem.setDescription(itemDetails.getDescription());
-            existingItem.setWeight(itemDetails.getWeight());
-            existingItem.setGoldValue(itemDetails.getGoldValue());
-            existingItem.setMagic(itemDetails.isMagic());
-            existingItem.setMagicalProperties(itemDetails.getMagicalProperties());
-            existingItem.setType(itemDetails.getType());
-            existingItem.setDamageType(itemDetails.getDamageType());
-            existingItem.setDamageRoll(itemDetails.getDamageRoll());
-            existingItem.setArmorClass(itemDetails.getArmorClass());
+    public ResponseEntity<Item> updateItem(@PathVariable int id, @Valid @RequestBody Item itemDetails) {
+        Item existingItem = itemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Item", id));
 
-            return ResponseEntity.ok(itemRepository.save(existingItem));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        existingItem.setName(itemDetails.getName());
+        existingItem.setDescription(itemDetails.getDescription());
+        existingItem.setWeight(itemDetails.getWeight());
+        existingItem.setGoldValue(itemDetails.getGoldValue());
+        existingItem.setMagic(itemDetails.isMagic());
+        existingItem.setMagicalProperties(itemDetails.getMagicalProperties());
+        existingItem.setType(itemDetails.getType());
+        existingItem.setDamageType(itemDetails.getDamageType());
+        existingItem.setDamageRoll(itemDetails.getDamageRoll());
+        existingItem.setArmorClass(itemDetails.getArmorClass());
+
+        log.debug("Updated item id={}", id);
+        return ResponseEntity.ok(itemRepository.save(existingItem));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteItem(@PathVariable int id) {
-        Optional<Item> item = itemRepository.findById(id);
-        if (item.isPresent()) {
-            itemRepository.delete(item.get());
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        if (!itemRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Item", id);
         }
-    }
-
-    // Character inventory endpoints
-    @GetMapping("/character/{characterId}/inventory")
-    public ResponseEntity<List<Item>> getCharacterInventory(@PathVariable int characterId) {
-        return characterRepository.findById(characterId)
-                .map(character -> ResponseEntity.ok(itemRepository.findByOwner(character)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PostMapping("/character/{characterId}/add")
-    public ResponseEntity<?> addItemToCharacter(@PathVariable int characterId, @RequestBody Item item) {
-        Optional<Character> characterOpt = characterRepository.findById(characterId);
-        if (characterOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Character character = characterOpt.get();
-
-        long weapons = character.getItems().stream().filter(Item::isWeapon).count();
-        long rings = character.getItems().stream().filter(i -> "RING".equalsIgnoreCase(i.getType())).count();
-
-        if (item.isWeapon() && weapons >= 2) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Character can't carry more than 2 weapons.");
-        }
-        if ("RING".equalsIgnoreCase(item.getType()) && rings >= 4) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Character can't wear more than 4 rings.");
-        }
-
-        item.setOwner(character);
-        Item savedItem = itemRepository.save(item);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
-    }
-
-
-    @PutMapping("/{itemId}/equip")
-    public ResponseEntity<Item> equipItem(@PathVariable int itemId) {
-        Optional<Item> itemOpt = itemRepository.findById(itemId);
-        if (itemOpt.isPresent()) {
-            Item item = itemOpt.get();
-            item.equip();
-            return ResponseEntity.ok(itemRepository.save(item));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PutMapping("/{itemId}/unequip")
-    public ResponseEntity<Item> unequipItem(@PathVariable int itemId) {
-        Optional<Item> itemOpt = itemRepository.findById(itemId);
-        if (itemOpt.isPresent()) {
-            Item item = itemOpt.get();
-            item.unequip();
-            return ResponseEntity.ok(itemRepository.save(item));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        itemRepository.deleteById(id);
+        log.info("Deleted item id={}", id);
+        return ResponseEntity.noContent().build();
     }
 }

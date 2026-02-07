@@ -1,6 +1,7 @@
 package org.swi_project.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
@@ -19,27 +20,36 @@ public class Monster {
     @Column(name = "Id")
     private Integer id;
 
+    @NotBlank
+    @Size(min = 1, max = 25)
     @Column(name = "Name", nullable = false, length = 25)
     private String name;
 
+    @Size(max = 200)
     @Column(name = "Description", nullable = false, length = 200)
     private String description;
 
+    @Min(1)
     @Column(name = "Health", nullable = false)
     private int health;
 
+    @Min(0)
     @Column(name = "Attack", nullable = false)
     private int attack;
 
+    @Min(0)
     @Column(name = "Defense", nullable = false)
     private int defense;
 
     @Column(name = "Boss", nullable = false)
     private boolean boss;
 
+    @Size(max = 200)
     @Column(name = "Abilities", nullable = false, length = 200)
     private String abilities;
 
+    @NotBlank
+    @Size(max = 25)
     @Column(name = "Type", nullable = false, length = 25)
     private String type;
 
@@ -59,5 +69,4 @@ public class Monster {
     @JsonIgnore
     @OneToMany(mappedBy = "monster")
     private List<MonsterInLocation> locations;
-
 }

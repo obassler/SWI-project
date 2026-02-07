@@ -1,9 +1,10 @@
 package org.swi_project.models;
 
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 
 @Getter
 @Setter
@@ -15,40 +16,50 @@ public class Item {
     @Column(name = "Id")
     private Integer id;
 
+    @NotBlank
+    @Size(min = 1, max = 25)
     @Column(name = "Name", nullable = false, length = 25)
     private String name;
 
+    @NotBlank
+    @Size(max = 25)
     @Column(name = "Type", nullable = false, length = 25)
-    private String type; // Changed from enum to String to match DB
+    private String type;
 
+    @Size(max = 200)
     @Column(name = "Description", nullable = false, length = 200)
     private String description;
 
+    @Min(0)
     @Column(name = "Weight", nullable = false)
     private int weight;
 
+    @Min(0)
     @Column(name = "GoldValue", nullable = false)
     private int goldValue;
 
     @Column(name = "Magic", nullable = false)
     private boolean magic;
 
+    @Size(max = 50)
     @Column(name = "MagicalProperties", nullable = false, length = 50)
     private String magicalProperties;
 
     @Column(name = "EquipState", nullable = false)
     private boolean equipState;
 
+    @Size(max = 50)
     @Column(name = "DamageType", nullable = false, length = 50)
     private String damageType;
 
+    @Size(max = 50)
     @Column(name = "DamageRoll", nullable = true, length = 50)
     private String damageRoll;
 
+    @Min(0)
     @Column(name = "ArmorClass", nullable = false)
     private int armorClass;
 
-    // Helper methods
     public boolean isWeapon() {
         return "WEAPON".equalsIgnoreCase(type);
     }
@@ -90,16 +101,4 @@ public class Item {
         return sb.toString();
     }
 
-    @ManyToOne
-    @JoinColumn(name = "character_id")
-    @JsonIgnoreProperties("items")  // Avoid infinite recursion from Character -> Item -> Character...
-    private Character owner;
-
-    public Character getOwner() {
-        return owner;
-    }
-
-    public void setOwner(Character owner) {
-        this.owner = owner;
-    }
 }

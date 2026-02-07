@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 
@@ -42,5 +42,53 @@ describe('Sidebar component', () => {
             const link = screen.getByText(label);
             expect(link).not.toHaveClass('bg-yellow-700');
         });
+    });
+
+    it('displays username when user is provided', () => {
+        const user = { username: 'testuser', role: 'USER' };
+
+        render(
+            <MemoryRouter>
+                <Sidebar user={user} onLogout={() => {}} />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByText('testuser')).toBeInTheDocument();
+    });
+
+    it('displays logout button when user is provided', () => {
+        const user = { username: 'testuser', role: 'USER' };
+
+        render(
+            <MemoryRouter>
+                <Sidebar user={user} onLogout={() => {}} />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByText('Logout')).toBeInTheDocument();
+    });
+
+    it('calls onLogout when logout button is clicked', () => {
+        const user = { username: 'testuser', role: 'USER' };
+        const onLogout = jest.fn();
+
+        render(
+            <MemoryRouter>
+                <Sidebar user={user} onLogout={onLogout} />
+            </MemoryRouter>
+        );
+
+        fireEvent.click(screen.getByText('Logout'));
+        expect(onLogout).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not display user section when user is not provided', () => {
+        render(
+            <MemoryRouter>
+                <Sidebar />
+            </MemoryRouter>
+        );
+
+        expect(screen.queryByText('Logout')).not.toBeInTheDocument();
     });
 });

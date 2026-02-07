@@ -1,5 +1,6 @@
 package org.swi_project.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,6 +31,7 @@ public class Quest {
     private boolean completion;
 
     @ManyToMany(mappedBy = "quests")
+    @JsonIgnoreProperties({"quests", "items", "ownedMonsters", "spells"})
     private List<Character> participants = new ArrayList<>();
 
 }

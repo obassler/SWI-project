@@ -1,30 +1,27 @@
 package org.swi_project.controllers;
 
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import java.util.List;
-import java.util.Optional;
-
-import org.swi_project.models.Quest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.swi_project.exception.ResourceNotFoundException;
 import org.swi_project.models.Character;
-import org.swi_project.repositories.QuestRepository;
+import org.swi_project.models.Quest;
 import org.swi_project.repositories.CharacterRepository;
+import org.swi_project.repositories.QuestRepository;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/quests")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@RequiredArgsConstructor
+@Slf4j
 public class QuestController {
 
     private final QuestRepository questRepository;
     private final CharacterRepository characterRepository;
-
-    @Autowired
-    public QuestController(QuestRepository questRepository, CharacterRepository characterRepository) {
-        this.questRepository = questRepository;
-        this.characterRepository = characterRepository;
-    }
 
     @GetMapping
     public List<Quest> getAllQuests() {
@@ -33,96 +30,88 @@ public class QuestController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Quest> getQuestById(@PathVariable int id) {
-        Optional<Quest> quest = questRepository.findById(id);
-        return quest.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return questRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", id));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Quest createQuest(@RequestBody Quest quest) {
-        return questRepository.save(quest);
+    public ResponseEntity<Quest> createQuest(@Valid @RequestBody Quest quest) {
+        Quest saved = questRepository.save(quest);
+        log.info("Created quest: {}", saved.getTitle());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Quest> updateQuest(@PathVariable int id, @RequestBody Quest questDetails) {
-        Optional<Quest> quest = questRepository.findById(id);
-        if (quest.isPresent()) {
-            Quest existingQuest = quest.get();
-            existingQuest.setTitle(questDetails.getTitle());
-            existingQuest.setDescription(questDetails.getDescription());
-            existingQuest.setCompletion(questDetails.isCompletion());
-            return ResponseEntity.ok(questRepository.save(existingQuest));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Quest> updateQuest(@PathVariable int id, @Valid @RequestBody Quest questDetails) {
+        Quest existingQuest = questRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", id));
+
+        existingQuest.setTitle(questDetails.getTitle());
+        existingQuest.setDescription(questDetails.getDescription());
+        existingQuest.setType(questDetails.getType());
+        existingQuest.setCompletion(questDetails.isCompletion());
+
+        log.debug("Updated quest id={}", id);
+        return ResponseEntity.ok(questRepository.save(existingQuest));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteQuest(@PathVariable int id) {
-        Optional<Quest> quest = questRepository.findById(id);
-        if (quest.isPresent()) {
-            questRepository.delete(quest.get());
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        if (!questRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Quest", id);
         }
+        questRepository.deleteById(id);
+        log.info("Deleted quest id={}", id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{questId}/participants")
     public ResponseEntity<List<Character>> getQuestParticipants(@PathVariable int questId) {
-        Optional<Quest> quest = questRepository.findById(questId);
-        return quest.map(q -> ResponseEntity.ok(q.getParticipants()))
-                .orElse(ResponseEntity.notFound().build());
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", questId));
+        return ResponseEntity.ok(quest.getParticipants());
     }
 
     @PostMapping("/{questId}/participants/{characterId}")
     public ResponseEntity<Quest> addParticipantToQuest(
             @PathVariable int questId,
             @PathVariable int characterId) {
-        Optional<Quest> questOpt = questRepository.findById(questId);
-        Optional<Character> characterOpt = characterRepository.findById(characterId);
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", questId));
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", characterId));
 
-        if (questOpt.isPresent() && characterOpt.isPresent()) {
-            Quest quest = questOpt.get();
-            Character character = characterOpt.get();
-
-            if (!quest.getParticipants().contains(character)) {
-                quest.getParticipants().add(character);
-                return ResponseEntity.ok(questRepository.save(quest));
-            }
-            return ResponseEntity.ok(quest);
+        if (!quest.getParticipants().contains(character)) {
+            quest.getParticipants().add(character);
+            log.info("Added character {} to quest {}", character.getName(), quest.getTitle());
+            return ResponseEntity.ok(questRepository.save(quest));
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(quest);
     }
 
     @DeleteMapping("/{questId}/participants/{characterId}")
     public ResponseEntity<Quest> removeParticipantFromQuest(
             @PathVariable int questId,
             @PathVariable int characterId) {
-        Optional<Quest> questOpt = questRepository.findById(questId);
-        Optional<Character> characterOpt = characterRepository.findById(characterId);
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", questId));
+        Character character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", characterId));
 
-        if (questOpt.isPresent() && characterOpt.isPresent()) {
-            Quest quest = questOpt.get();
-            Character character = characterOpt.get();
-
-            if (quest.getParticipants().remove(character)) {
-                return ResponseEntity.ok(questRepository.save(quest));
-            }
-            return ResponseEntity.ok(quest);
+        if (quest.getParticipants().remove(character)) {
+            log.info("Removed character {} from quest {}", character.getName(), quest.getTitle());
+            return ResponseEntity.ok(questRepository.save(quest));
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(quest);
     }
 
     @PutMapping("/{questId}/complete")
     public ResponseEntity<Quest> completeQuest(@PathVariable int questId) {
-        Optional<Quest> questOpt = questRepository.findById(questId);
-        if (questOpt.isPresent()) {
-            Quest quest = questOpt.get();
-            quest.setCompletion(true);
-            return ResponseEntity.ok(questRepository.save(quest));
-        }
-        return ResponseEntity.notFound().build();
+        Quest quest = questRepository.findById(questId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quest", questId));
+        quest.setCompletion(true);
+        log.info("Completed quest: {}", quest.getTitle());
+        return ResponseEntity.ok(questRepository.save(quest));
     }
 }

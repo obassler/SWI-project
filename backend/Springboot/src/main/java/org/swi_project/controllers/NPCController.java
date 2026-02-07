@@ -1,25 +1,24 @@
 package org.swi_project.controllers;
 
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import java.util.List;
-import java.util.Optional;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.swi_project.exception.ResourceNotFoundException;
 import org.swi_project.models.NPC;
 import org.swi_project.repositories.NPCRepository;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/npcs")
+@RequiredArgsConstructor
+@Slf4j
 public class NPCController {
 
     private final NPCRepository npcRepository;
-
-    @Autowired
-    public NPCController(NPCRepository npcRepository) {
-        this.npcRepository = npcRepository;
-    }
 
     @GetMapping
     public List<NPC> getAllNPCs() {
@@ -28,39 +27,39 @@ public class NPCController {
 
     @GetMapping("/{id}")
     public ResponseEntity<NPC> getNPCById(@PathVariable int id) {
-        Optional<NPC> npc = npcRepository.findById(id);
-        return npc.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return npcRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("NPC", id));
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public NPC createNPC(@RequestBody NPC npc) {
-        return npcRepository.save(npc);
+    public ResponseEntity<NPC> createNPC(@Valid @RequestBody NPC npc) {
+        NPC saved = npcRepository.save(npc);
+        log.info("Created NPC: {}", saved.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NPC> updateNpc(@PathVariable int id, @RequestBody NPC updatedNpc) {
-        return npcRepository.findById(id)
-                .map(npc -> {
-                    npc.setName(updatedNpc.getName());
-                    npc.setRole(updatedNpc.getRole());
-                    npc.setDescription(updatedNpc.getDescription());
-                    npc.setHostility(updatedNpc.isHostility());
-                    return ResponseEntity.ok(npcRepository.save(npc));
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
+    public ResponseEntity<NPC> updateNpc(@PathVariable int id, @Valid @RequestBody NPC updatedNpc) {
+        NPC npc = npcRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("NPC", id));
 
+        npc.setName(updatedNpc.getName());
+        npc.setRole(updatedNpc.getRole());
+        npc.setDescription(updatedNpc.getDescription());
+        npc.setHostility(updatedNpc.isHostility());
+
+        log.debug("Updated NPC id={}", id);
+        return ResponseEntity.ok(npcRepository.save(npc));
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNPC(@PathVariable int id) {
-        Optional<NPC> npc = npcRepository.findById(id);
-        if (npc.isPresent()) {
-            npcRepository.delete(npc.get());
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
+        if (!npcRepository.existsById(id)) {
+            throw new ResourceNotFoundException("NPC", id);
         }
+        npcRepository.deleteById(id);
+        log.info("Deleted NPC id={}", id);
+        return ResponseEntity.noContent().build();
     }
 }

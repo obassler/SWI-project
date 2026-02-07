@@ -5,6 +5,27 @@ const API_BASE_URL =
 
 const getAuthToken = () => localStorage.getItem('token');
 
+const setAuthToken = (token) => {
+    if (token) {
+        localStorage.setItem('token', token);
+    } else {
+        localStorage.removeItem('token');
+    }
+};
+
+const getUser = () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+};
+
+const setUser = (user) => {
+    if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+    } else {
+        localStorage.removeItem('user');
+    }
+};
+
 async function fetchApi(endpoint, options = {}) {
     const { method = 'GET', body, headers = {}, withCredentials = true, ...rest } = options;
     const token = getAuthToken();
@@ -14,11 +35,6 @@ async function fetchApi(endpoint, options = {}) {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers
     };
-
-    console.log(`Making ${method} request to ${API_BASE_URL}${endpoint}`, {
-        headers: fullHeaders,
-        withCredentials
-    });
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method,
@@ -30,17 +46,25 @@ async function fetchApi(endpoint, options = {}) {
 
     const contentType = response.headers.get("content-type");
 
+    if (response.status === 401) {
+        setAuthToken(null);
+        setUser(null);
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+    }
+
     if (!response.ok) {
-        let errorText;
+        let errorData;
         try {
-            errorText = contentType?.includes("application/json")
-                ? JSON.stringify(await response.json())
-                : await response.text();
+            errorData = contentType?.includes("application/json")
+                ? await response.json()
+                : { error: await response.text() };
         } catch {
-            errorText = 'Unknown error';
+            errorData = { error: 'Unknown error' };
         }
-        console.error(`API error: ${response.status} - ${errorText}`);
-        throw new Error(`API error: ${response.status} - ${errorText}`);
+        const error = new Error(errorData.error || `API error: ${response.status}`);
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
     }
 
     if (contentType?.includes("application/json")) {
@@ -48,7 +72,6 @@ async function fetchApi(endpoint, options = {}) {
         try {
             return text ? JSON.parse(text) : null;
         } catch {
-            console.error("Failed to parse JSON:", text);
             throw new Error("Invalid JSON response");
         }
     }
@@ -56,8 +79,44 @@ async function fetchApi(endpoint, options = {}) {
     return null;
 }
 
+export const auth = {
+    login: async (username, password) => {
+        const response = await fetchApi('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+        });
+        setAuthToken(response.token);
+        setUser({ username: response.username, role: response.role });
+        return response;
+    },
+
+    register: async (username, email, password) => {
+        return fetchApi('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ username, email, password })
+        });
+    },
+
+    logout: () => {
+        setAuthToken(null);
+        setUser(null);
+    },
+
+    isAuthenticated: () => !!getAuthToken(),
+
+    getUser,
+
+    validateToken: async () => {
+        try {
+            const response = await fetchApi('/auth/validate');
+            return response.valid;
+        } catch {
+            return false;
+        }
+    }
+};
+
 export const api = {
-    // Characters
     getCharacters: () => fetchApi('/characters'),
     getCharacter: (id) => fetchApi(`/characters/${id}`),
     createCharacter: (character) => fetchApi('/characters', {
@@ -92,7 +151,6 @@ export const api = {
             body: JSON.stringify({ itemId, equip })
         }),
 
-    // Items
     getItems: () => fetchApi('/items'),
     getItem: (id) => fetchApi(`/items/${id}`),
     createItem: (item) => fetchApi('/items', {
@@ -105,7 +163,6 @@ export const api = {
     }),
     deleteItem: (id) => fetchApi(`/items/${id}`, { method: 'DELETE' }),
 
-    // Spells
     getSpells: () => fetchApi('/spells'),
     getSpell: (id) => fetchApi(`/spells/${id}`),
     createSpell: (spell) => fetchApi('/spells', {
@@ -113,14 +170,12 @@ export const api = {
         body: JSON.stringify(spell)
     }),
     updateSpell: (id, spell) => {
-        console.log(`Updating spell ${id} with data:`, spell);
         return fetchApi(`/spells/${id}`, {
             method: 'PUT',
             body: JSON.stringify(spell)
         });
     },
     deleteSpell: (id) => {
-        console.log(`Deleting spell ${id}`);
         return fetchApi(`/spells/${id}`, {
             method: 'DELETE'
         });
@@ -128,7 +183,9 @@ export const api = {
     assignSpellToCharacter: (characterId, spellId) =>
         fetchApi(`/characters/${characterId}/spells/${spellId}`, { method: 'POST' }),
 
-    // Monsters
+    removeSpellFromCharacter: (characterId, spellId) =>
+        fetchApi(`/characters/${characterId}/spells/${spellId}`, { method: 'DELETE' }),
+
     getMonsters: () => fetchApi('/monsters'),
     getMonster: (id) => fetchApi(`/monsters/${id}`),
     createMonster: (monster) => fetchApi('/monsters', {
@@ -141,7 +198,6 @@ export const api = {
     }),
     deleteMonster: (id) => fetchApi(`/monsters/${id}`, { method: 'DELETE' }),
 
-    // NPCs
     getNpcs: () => fetchApi('/npcs'),
     getNpc: (id) => fetchApi(`/npcs/${id}`),
     createNpc: (npc) => fetchApi('/npcs', {
@@ -154,7 +210,6 @@ export const api = {
     }),
     deleteNpc: (id) => fetchApi(`/npcs/${id}`, { method: 'DELETE' }),
 
-    // Locations
     getLocation: () => fetchApi('/locations'),
     createLocation: (location) => fetchApi('/locations', {
         method: 'POST',
@@ -166,7 +221,6 @@ export const api = {
     }),
     deleteLocation: (id) => fetchApi(`/locations/${id}`, { method: 'DELETE' }),
 
-    // Quests
     getQuests: () => fetchApi('/quests'),
     getQuest: (id) => fetchApi(`/quests/${id}`),
     addQuest: (quest) => fetchApi('/quests', {
@@ -181,7 +235,6 @@ export const api = {
         method: 'DELETE'
     }),
 
-    // Extra functionality
     addEnemyToLocation: (locationId) => fetchApi(`/locations/${locationId}/add-random-monster`, {
         method: 'POST'
     })

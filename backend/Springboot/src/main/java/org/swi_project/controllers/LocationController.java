@@ -1,8 +1,12 @@
 package org.swi_project.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.swi_project.exception.ResourceNotFoundException;
 import org.swi_project.models.Location;
 import org.swi_project.models.Monster;
 import org.swi_project.models.MonsterInLocation;
@@ -17,16 +21,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/locations")
+@RequiredArgsConstructor
+@Slf4j
 public class LocationController {
 
-    @Autowired
-    private LocationRepository locationRepository;
-
-    @Autowired
-    private MonsterRepository monsterRepository;
-
-    @Autowired
-    private NPCRepository npcRepository;
+    private final LocationRepository locationRepository;
+    private final MonsterRepository monsterRepository;
+    private final NPCRepository npcRepository;
 
     @GetMapping
     public List<Location> getAllLocations() {
@@ -35,18 +36,24 @@ public class LocationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Location> getLocationById(@PathVariable int id) {
-        Optional<Location> location = locationRepository.findById(id);
-        return location.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return locationRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new ResourceNotFoundException("Location", id));
+    }
+
+    @PostMapping
+    public ResponseEntity<Location> createLocation(@RequestBody Location location) {
+        Location saved = locationRepository.save(location);
+        log.info("Created location: {}", saved.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<Location> updateLocation(@PathVariable int id, @RequestBody Location updatedLocation) {
-        Optional<Location> optionalLocation = locationRepository.findById(id);
-        if (optionalLocation.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        Location existing = locationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Location", id));
 
-        Location existing = optionalLocation.get();
         existing.setName(updatedLocation.getName());
         existing.setDescription(updatedLocation.getDescription());
 
@@ -70,8 +77,6 @@ public class LocationController {
         }
         existing.getNpcs().addAll(attachedNpcs);
 
-
-
         existing.getMonstersInLocation().clear();
         List<MonsterInLocation> newLinks = new ArrayList<>();
         if (updatedLocation.getMonstersInLocation() != null) {
@@ -91,6 +96,17 @@ public class LocationController {
         existing.getMonstersInLocation().addAll(newLinks);
 
         Location saved = locationRepository.save(existing);
+        log.info("Updated location id={}", id);
         return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLocation(@PathVariable int id) {
+        if (!locationRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Location", id);
+        }
+        locationRepository.deleteById(id);
+        log.info("Deleted location id={}", id);
+        return ResponseEntity.noContent().build();
     }
 }
