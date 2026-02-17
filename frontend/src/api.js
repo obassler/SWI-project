@@ -233,9 +233,5 @@ export const api = {
     }),
     deleteQuest: (id) => fetchApi(`/quests/${id}`, {
         method: 'DELETE'
-    }),
-
-    addEnemyToLocation: (locationId) => fetchApi(`/locations/${locationId}/add-random-monster`, {
-        method: 'POST'
     })
 };

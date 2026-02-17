@@ -150,8 +150,6 @@ export default function CharacterManager() {
                 spells: form.spells.map(spell => spell.id || spell),
             };
 
-            console.log('Saving payload:', payload, 'Editing id:', editingCharacter?.id);
-
             if (editingCharacter) {
                 await api.updateCharacter(editingCharacter.id, payload);
                 alert('Character updated!');

@@ -58,7 +58,6 @@ export default function Dashboard() {
 
   const handleCharacterSelect = (e) => {
     const id = parseInt(e.target.value);
-    console.log('Selecting char id:', id, 'current selected:', selectedCharacterIds);
     if (!selectedCharacterIds.includes(id) && selectedCharacterIds.length < 5) {
       setSelectedCharacterIds([...selectedCharacterIds, id]);
     }
@@ -107,7 +106,6 @@ export default function Dashboard() {
   const selectedLocation = locations.find(l => l.id === selectedLocationId);
   const npcsInLocation = selectedLocation?.npcs || [];
   const hostileNpcs = npcsInLocation.filter(npc => hostileNpcIds.includes(npc.id));
-  console.log('selectedCharacterIds:', selectedCharacterIds);
   return (
       <div className="space-y-6 p-4">
         {loading ? (

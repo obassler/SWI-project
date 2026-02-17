@@ -57,15 +57,10 @@ export default function Spells() {
                 throw new Error('All fields are required');
             }
 
-            console.log(`Submitting spell data:`, formData);
-            console.log(`Editing mode: ${editingSpellId ? 'Update' : 'Create'}`);
-
             if (editingSpellId) {
                 await api.updateSpell(editingSpellId, formData);
-                console.log(`Spell ${editingSpellId} updated successfully`);
             } else {
-                const newSpell = await api.createSpell(formData);
-                console.log(`New spell created:`, newSpell);
+                await api.createSpell(formData);
             }
 
             await fetchSpells();
@@ -79,7 +74,6 @@ export default function Spells() {
     };
 
     const handleEdit = (spell) => {
-        console.log(`Editing spell:`, spell);
         setFormData({
             name: spell.name,
             description: spell.description,
@@ -97,9 +91,7 @@ export default function Spells() {
 
         setError(null);
         try {
-            console.log(`Attempting to delete spell ${id}`);
             await api.deleteSpell(id);
-            console.log(`Spell ${id} deleted successfully`);
             await fetchSpells();
         } catch (err) {
             console.error('Error deleting spell:', err);
@@ -113,7 +105,7 @@ export default function Spells() {
                 onClick={() => {
                     if (editingSpellId) {
                         setEditingSpellId(null);
-                        setFormData({ name: '', role: '', description: '', level: 1 });
+                        setFormData({ name: '', type: '', description: '', level: 1 });
                     }
                     setShowForm(!showForm);
                 }}

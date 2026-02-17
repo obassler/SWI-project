@@ -227,7 +227,7 @@ export default function Location() {
                         </div>
                         <div>
                           <h3 className="text-yellow-300 font-semibold mb-1">NPCs</h3>
-                          {npcs.filter(n => !n.location || n.location.id === editingLocation).map(npc => (
+                          {npcs.map(npc => (
                               <label key={npc.id} className="block text-sm">
                                 <input
                                     type="checkbox"

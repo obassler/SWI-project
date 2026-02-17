@@ -86,7 +86,7 @@ export default function Items() {
                                 <h3 className="text-yellow-300 font-semibold">{item.name}</h3>
                                 <p className="text-gray-300 text-sm">{item.description}</p>
                                 <p className="text-gray-400 text-sm">Type: {item.type} | Weight: {item.weight} | Gold: {item.goldValue}</p>
-                                {item.magic && <p className="text-green-400 text-sm">Magical: {item.magicalProperties}</p>}
+                                {item.magicalProperties && <p className="text-green-400 text-sm">Magical: {item.magicalProperties}</p>}
                                 {item.damageType && <p className="text-sm text-blue-300">Damage: {item.damageRoll} ({item.damageType})</p>}
                                 {item.armorClass > 0 && <p className="text-sm text-purple-300">Armor Class: {item.armorClass}</p>}
                                 <div className="flex gap-3 mt-2">

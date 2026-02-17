@@ -2,6 +2,7 @@ package org.swi_project.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,5 +27,6 @@ public class MonsterInLocation {
     private Monster monster;
 
 
+    @Min(1)
     private int quantity;
 }

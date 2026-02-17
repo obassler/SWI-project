@@ -75,20 +75,22 @@ public class CharacterController {
     }
 
     @PutMapping("/{id}/heal")
+    @Transactional
     public ResponseEntity<Character> healCharacter(@PathVariable int id) {
         Character character = characterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", id));
         character.setCurrentHp(character.getMaxHp());
-        character.setStatus("Živý");
+        character.setStatus("Alive");
         return ResponseEntity.ok(characterRepository.save(character));
     }
 
     @PutMapping("/heal-batch")
+    @Transactional
     public ResponseEntity<List<Character>> healParty(@RequestBody List<Integer> characterIds) {
         List<Character> characters = characterRepository.findAllById(characterIds);
         for (Character character : characters) {
             character.setCurrentHp(character.getMaxHp());
-            character.setStatus("Živý");
+            character.setStatus("Alive");
         }
         return ResponseEntity.ok(characterRepository.saveAll(characters));
     }
@@ -193,8 +195,14 @@ public class CharacterController {
     public ResponseEntity<?> equipItemForCharacter(
             @PathVariable int characterId,
             @RequestBody Map<String, Object> body) {
-        int itemId = ((Number) body.get("itemId")).intValue();
-        boolean equip = (boolean) body.get("equip");
+        Object itemIdObj = body.get("itemId");
+        Object equipObj = body.get("equip");
+        if (!(itemIdObj instanceof Number) || !(equipObj instanceof Boolean)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Request must include 'itemId' (number) and 'equip' (boolean)."));
+        }
+        int itemId = ((Number) itemIdObj).intValue();
+        boolean equip = (Boolean) equipObj;
 
         Character character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", characterId));

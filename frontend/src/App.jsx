@@ -31,6 +31,17 @@ export default function App() {
         };
 
         window.addEventListener('auth:logout', handleLogout);
+
+        if (auth.isAuthenticated()) {
+            auth.validateToken().then(valid => {
+                if (!valid) {
+                    auth.logout();
+                    setIsAuthenticated(false);
+                    setUser(null);
+                }
+            });
+        }
+
         return () => window.removeEventListener('auth:logout', handleLogout);
     }, []);
 
