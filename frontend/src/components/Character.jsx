@@ -228,20 +228,17 @@ export default function CharacterManager() {
         }
     };
 
-    if (loading) return <LoadingSpinner message="Loading characters..."/>;
-    if (error) return <ErrorMessage message={error} onRetry={loadCharacters}/>;
+    if (loading) return <LoadingSpinner message="Loading characters..." />;
+    if (error) return <ErrorMessage message={error} onRetry={loadCharacters} />;
 
     return (
-        <div
-            className="max-w-7xl mx-auto p-6 bg-gradient-to-b from-gray-900 to-gray-800 text-white rounded-xl shadow-xl min-h-screen space-y-8"
-        >
+        <div className="max-w-7xl mx-auto p-4 bg-gradient-to-b from-gray-900 to-gray-800 text-white rounded-xl shadow-xl min-h-screen space-y-8">
             <header>
                 <h1 className="text-5xl font-extrabold text-yellow-400 tracking-wide drop-shadow-md">
                     Character Manager
                 </h1>
             </header>
 
-            {/* Character List */}
             <section aria-label="Character List">
                 <ul className="space-y-3 max-h-96 overflow-y-auto">
                     {characters.length ? (
@@ -251,8 +248,8 @@ export default function CharacterManager() {
                                 className="bg-gray-700 p-4 rounded flex justify-between items-center shadow-lg hover:bg-gray-600 transition"
                             >
                                 <div>
-                                    <span className="font-bold text-yellow-300">{char.name}</span> —{' '}
-                                    {char.race?.name} {char.characterClass?.name} • Level {char.level}
+                                    <span className="font-bold text-yellow-300">{char.name}</span> -{' '}
+                                    {char.race?.name} {char.characterClass?.name} - Level {char.level}
                                 </div>
                                 <div className="flex gap-3">
                                     <button
@@ -276,7 +273,6 @@ export default function CharacterManager() {
                 </ul>
             </section>
 
-            {/* Character Form */}
             <section
                 aria-label={editingCharacter ? 'Edit Character Form' : 'Create New Character Form'}
                 className="bg-gray-700 rounded-lg p-6 shadow-lg max-w-5xl mx-auto"
@@ -286,84 +282,44 @@ export default function CharacterManager() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Main Info */}
                     <div className="space-y-4 col-span-1 md:col-span-1">
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="name">
-                                Name
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="name">Name</label>
                             <input
-                                id="name"
-                                name="name"
-                                value={form.name}
-                                onChange={handleInputChange}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
-                                placeholder="Character name"
+                                id="name" name="name" value={form.name} onChange={handleInputChange}
+                                className="w-full rounded bg-gray-600 p-2 text-white" placeholder="Character name"
                             />
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="level">
-                                Level
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="level">Level</label>
                             <input
-                                id="level"
-                                name="level"
-                                type="number"
-                                min={1}
-                                max={20}
-                                value={form.level}
-                                onChange={handleInputChange}
+                                id="level" name="level" type="number" min={1} max={20}
+                                value={form.level} onChange={handleInputChange}
                                 className="w-full rounded bg-gray-600 p-2 text-white"
                             />
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="race">
-                                Race
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="race">Race</label>
                             <select
-                                id="race"
-                                name="race"
-                                value={form.race}
-                                onChange={handleInputChange}
+                                id="race" name="race" value={form.race} onChange={handleInputChange}
                                 className="w-full rounded bg-gray-600 p-2 text-white"
                             >
-                                {races.map((r) => (
-                                    <option key={r} value={r}>
-                                        {r}
-                                    </option>
-                                ))}
+                                {races.map((r) => <option key={r} value={r}>{r}</option>)}
                             </select>
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="characterClass">
-                                Class
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="characterClass">Class</label>
                             <select
-                                id="characterClass"
-                                name="characterClass"
-                                value={form.characterClass}
-                                onChange={handleInputChange}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
+                                id="characterClass" name="characterClass" value={form.characterClass}
+                                onChange={handleInputChange} className="w-full rounded bg-gray-600 p-2 text-white"
                             >
-                                {classes.map((c) => (
-                                    <option key={c} value={c}>
-                                        {c}
-                                    </option>
-                                ))}
+                                {classes.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="status">
-                                Status
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="status">Status</label>
                             <select
-                                id="status"
-                                name="status"
-                                value={form.status}
+                                id="status" name="status" value={form.status}
                                 onChange={(e) => handleStatusChange(e.target.value)}
                                 className="w-full rounded bg-gray-600 p-2 text-white"
                             >
@@ -373,136 +329,88 @@ export default function CharacterManager() {
                                 <option>Unconscious</option>
                             </select>
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="background">
-                                Background
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="background">Background</label>
                             <input
-                                id="background"
-                                name="background"
-                                value={form.background}
-                                onChange={handleInputChange}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
+                                id="background" name="background" value={form.background}
+                                onChange={handleInputChange} className="w-full rounded bg-gray-600 p-2 text-white"
                                 placeholder="Character background"
                             />
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="alignment">
-                                Alignment
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="alignment">Alignment</label>
                             <input
-                                id="alignment"
-                                name="alignment"
-                                value={form.alignment}
-                                onChange={handleInputChange}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
+                                id="alignment" name="alignment" value={form.alignment}
+                                onChange={handleInputChange} className="w-full rounded bg-gray-600 p-2 text-white"
                                 placeholder="Alignment"
                             />
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="specialization">
-                                Specialization
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="specialization">Specialization</label>
                             <input
-                                id="specialization"
-                                name="specialization"
-                                value={form.specialization}
-                                onChange={handleInputChange}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
+                                id="specialization" name="specialization" value={form.specialization}
+                                onChange={handleInputChange} className="w-full rounded bg-gray-600 p-2 text-white"
                                 placeholder="Special skills or focus"
                             />
                         </div>
-
                         <div>
-                            <label className="block mb-1 font-semibold" htmlFor="notes">
-                                Notes
-                            </label>
+                            <label className="block mb-1 font-semibold" htmlFor="notes">Notes</label>
                             <textarea
-                                id="notes"
-                                name="notes"
-                                value={form.notes}
-                                onChange={handleInputChange}
-                                rows={4}
-                                className="w-full rounded bg-gray-600 p-2 text-white"
+                                id="notes" name="notes" value={form.notes} onChange={handleInputChange}
+                                rows={4} className="w-full rounded bg-gray-600 p-2 text-white"
                                 placeholder="Additional info"
                             />
                         </div>
                     </div>
 
-                    {/* Stats */}
                     <div className="col-span-1 md:col-span-1 space-y-4">
                         <h3 className="text-xl font-semibold border-b border-yellow-400 pb-2 mb-4">Stats</h3>
                         {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map((stat) => (
                             <div key={stat}>
-                                <label className="block mb-1 capitalize font-semibold" htmlFor={stat}>
-                                    {stat}
-                                </label>
+                                <label className="block mb-1 capitalize font-semibold" htmlFor={stat}>{stat}</label>
                                 <input
-                                    id={stat}
-                                    name={stat}
-                                    type="number"
-                                    min={1}
-                                    max={30}
-                                    value={form[stat]}
-                                    onChange={handleInputChange}
+                                    id={stat} name={stat} type="number" min={1} max={30}
+                                    value={form[stat]} onChange={handleInputChange}
                                     className="w-full rounded bg-gray-600 p-2 text-white"
                                 />
                             </div>
                         ))}
-
                         <div className="grid grid-cols-2 gap-4 mt-6">
                             <div>
-                                <label className="block mb-1 font-semibold" htmlFor="currentHp">
-                                    Current HP
-                                </label>
+                                <label className="block mb-1 font-semibold" htmlFor="currentHp">Current HP</label>
                                 <input
-                                    id="currentHp"
-                                    name="currentHp"
-                                    type="number"
-                                    min={0}
-                                    max={form.maxHp}
-                                    value={form.currentHp}
-                                    onChange={handleInputChange}
+                                    id="currentHp" name="currentHp" type="number" min={0} max={form.maxHp}
+                                    value={form.currentHp} onChange={handleInputChange}
                                     className="w-full rounded bg-gray-600 p-2 text-white"
                                 />
                             </div>
-
                             <div>
-                                <label className="block mb-1 font-semibold" htmlFor="maxHp">
-                                    Max HP
-                                </label>
+                                <label className="block mb-1 font-semibold" htmlFor="maxHp">Max HP</label>
                                 <input
-                                    id="maxHp"
-                                    name="maxHp"
-                                    type="number"
-                                    min={1}
-                                    max={999}
-                                    value={form.maxHp}
-                                    onChange={handleInputChange}
+                                    id="maxHp" name="maxHp" type="number" min={1} max={999}
+                                    value={form.maxHp} onChange={handleInputChange}
                                     className="w-full rounded bg-gray-600 p-2 text-white"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Items & Spells */}
                     <div className="col-span-1 md:col-span-1 space-y-6">
                         <div className="bg-gray-800 rounded p-4 shadow-inner max-h-56 overflow-auto">
                             <h3 className="text-xl font-semibold border-b border-yellow-400 pb-2 mb-3">Items</h3>
+                            {!editingCharacter && (
+                                <p className="text-yellow-400 text-sm mb-3">Save the character first, then edit to assign items.</p>
+                            )}
                             <select
                                 value={selectedItemId}
                                 onChange={(e) => setSelectedItemId(e.target.value)}
                                 className="w-full rounded bg-gray-600 p-2 text-white mb-3"
+                                disabled={!editingCharacter}
                                 aria-label="Select item to add"
                             >
                                 <option value="">-- Select an item --</option>
                                 {availableItems.map((item) => (
-                                    <option key={item.id} value={item.id}>
-                                        {item.name}
-                                    </option>
+                                    <option key={item.id} value={item.id}>{item.name}</option>
                                 ))}
                             </select>
                             <button
@@ -514,7 +422,6 @@ export default function CharacterManager() {
                             >
                                 Add Item
                             </button>
-
                             <ul className="mt-4 space-y-1">
                                 {form.items.length === 0 && <li className="text-gray-400 italic">No items assigned</li>}
                                 {form.items.map((item) => (
@@ -535,17 +442,19 @@ export default function CharacterManager() {
 
                         <div className="bg-gray-800 rounded p-4 shadow-inner max-h-56 overflow-auto">
                             <h3 className="text-xl font-semibold border-b border-yellow-400 pb-2 mb-3">Spells</h3>
+                            {!editingCharacter && (
+                                <p className="text-yellow-400 text-sm mb-3">Save the character first, then edit to assign spells.</p>
+                            )}
                             <select
                                 value={selectedSpellId}
                                 onChange={(e) => setSelectedSpellId(e.target.value)}
                                 className="w-full rounded bg-gray-600 p-2 text-white mb-3"
+                                disabled={!editingCharacter}
                                 aria-label="Select spell to add"
                             >
                                 <option value="">-- Select a spell --</option>
                                 {availableSpells.map((spell) => (
-                                    <option key={spell.id} value={spell.id}>
-                                        {spell.name}
-                                    </option>
+                                    <option key={spell.id} value={spell.id}>{spell.name}</option>
                                 ))}
                             </select>
                             <button
@@ -557,10 +466,8 @@ export default function CharacterManager() {
                             >
                                 Add Spell
                             </button>
-
                             <ul className="mt-4 space-y-1">
-                                {form.spells.length === 0 &&
-                                    <li className="text-gray-400 italic">No spells assigned</li>}
+                                {form.spells.length === 0 && <li className="text-gray-400 italic">No spells assigned</li>}
                                 {form.spells.map((spell) => (
                                     <li key={spell.id} className="flex justify-between items-center">
                                         <span>{spell.name}</span>
@@ -597,4 +504,3 @@ export default function CharacterManager() {
         </div>
     );
 }
-

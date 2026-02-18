@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorMessage from './ErrorMessage';
 
 export default function Spells() {
     const [spells, setSpells] = useState([]);
@@ -26,7 +28,6 @@ export default function Spells() {
             const spellData = await api.getSpells();
             setSpells(spellData || []);
         } catch (err) {
-            console.error('Error fetching spells:', err);
             setError('Failed to load spells');
         } finally {
             setLoading(false);
@@ -66,7 +67,6 @@ export default function Spells() {
             await fetchSpells();
             resetForm();
         } catch (err) {
-            console.error('Error saving spell:', err);
             setError(`Failed to save spell: ${err.message || 'Please try again'}`);
         } finally {
             setSubmitLoading(false);
@@ -85,22 +85,21 @@ export default function Spells() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this spell?')) {
-            return;
-        }
-
+        if (!window.confirm('Are you sure you want to delete this spell?')) return;
         setError(null);
         try {
             await api.deleteSpell(id);
             await fetchSpells();
         } catch (err) {
-            console.error('Error deleting spell:', err);
             setError(`Failed to delete spell: ${err.message || 'Please try again'}`);
         }
     };
 
+    if (loading) return <LoadingSpinner message="Loading spells..." />;
+    if (error && !spells.length) return <ErrorMessage message={error} onRetry={fetchSpells} />;
+
     return (
-        <div className="p-4">
+        <div className="p-4 space-y-6 text-white">
             <button
                 onClick={() => {
                     if (editingSpellId) {
@@ -109,14 +108,14 @@ export default function Spells() {
                     }
                     setShowForm(!showForm);
                 }}
-                className="mb-4 px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
+                className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
             >
                 {showForm ? (editingSpellId ? 'Cancel Edit' : 'Hide Form') : 'Create New Spell'}
             </button>
 
-
             {showForm && (
-                <form onSubmit={handleSubmit} className="bg-gray-700 p-6 rounded space-y-4 mb-6">
+                <form onSubmit={handleSubmit} className="bg-gray-700 p-4 rounded space-y-4">
+                    <h2 className="text-xl text-yellow-200">{editingSpellId ? 'Edit Spell' : 'Add New Spell'}</h2>
                     <div>
                         <label className="block text-gray-300 mb-1">Name</label>
                         <input
@@ -154,7 +153,7 @@ export default function Spells() {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Level (1–9)</label>
+                        <label className="block text-gray-300 mb-1">Level (1-9)</label>
                         <input
                             type="number"
                             name="level"
@@ -188,39 +187,27 @@ export default function Spells() {
                 </form>
             )}
 
-            {loading ? (
-                <p className="text-yellow-300">Loading spells...</p>
-            ) : error ? (
-                <p className="text-red-500">{error}</p>
-            ) : spells.length === 0 ? (
+            {error && spells.length > 0 && <ErrorMessage message={error} onRetry={fetchSpells} />}
+
+            {spells.length === 0 ? (
                 <p className="text-gray-400">No spells found.</p>
             ) : (
                 <div>
                     <p className="mb-2 text-sm text-gray-400">Total spells: {spells.length}</p>
-                    <ul className="space-y-2 text-sm text-gray-200">
+                    <ul className="space-y-3">
                         {spells.map(spell => (
-                            <li key={spell.id} className="bg-gray-800 p-3 rounded">
+                            <li key={spell.id} className="bg-gray-800 p-4 rounded">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <strong>{spell.name}</strong> – {spell.type}
+                                        <h3 className="text-yellow-300 font-semibold">{spell.name}</h3>
+                                        <p className="text-gray-400 text-sm">Type: {spell.type} | Level: {spell.level}</p>
                                         {spell.description && (
-                                            <div className="text-xs text-gray-400 italic">"{spell.description}"</div>
+                                            <p className="text-gray-300 text-sm">{spell.description}</p>
                                         )}
-                                        <div className="text-xs text-gray-400">Level: {spell.level} | ID: {spell.id}</div>
                                     </div>
                                     <div className="flex gap-3 text-lg">
-                                        <button
-                                            onClick={() => handleEdit(spell)}
-                                            className="text-green-400 hover:text-green-600"
-                                        >
-                                            ✎
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(spell.id)}
-                                            className="text-red-400 hover:text-red-600"
-                                        >
-                                            ✕
-                                        </button>
+                                        <button onClick={() => handleEdit(spell)} className="text-green-400 hover:text-green-600">✎</button>
+                                        <button onClick={() => handleDelete(spell.id)} className="text-red-400 hover:text-red-600">✕</button>
                                     </div>
                                 </div>
                             </li>

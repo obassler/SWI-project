@@ -60,6 +60,24 @@ public class Item {
     @Column(name = "ArmorClass", nullable = false)
     private int armorClass;
 
+    @Column(name = "StrengthBonus", nullable = false)
+    private int strengthBonus;
+
+    @Column(name = "DexterityBonus", nullable = false)
+    private int dexterityBonus;
+
+    @Column(name = "ConstitutionBonus", nullable = false)
+    private int constitutionBonus;
+
+    @Column(name = "IntelligenceBonus", nullable = false)
+    private int intelligenceBonus;
+
+    @Column(name = "WisdomBonus", nullable = false)
+    private int wisdomBonus;
+
+    @Column(name = "CharismaBonus", nullable = false)
+    private int charismaBonus;
+
     public boolean isWeapon() {
         return "WEAPON".equalsIgnoreCase(type);
     }

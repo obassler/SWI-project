@@ -4,6 +4,15 @@ import { api } from '../api';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
+const STAT_BONUS_MAP = {
+    strength: 'strengthBonus',
+    dexterity: 'dexterityBonus',
+    constitution: 'constitutionBonus',
+    intelligence: 'intelligenceBonus',
+    wisdom: 'wisdomBonus',
+    charisma: 'charismaBonus',
+};
+
 export default function CharacterDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -72,7 +81,6 @@ export default function CharacterDetail() {
             await fetchCharacter();
         } catch (err) {
             alert("Failed to assign item: " + (err.message || 'Unknown error'));
-            console.error('Failed to assign item:', err);
         }
     };
 
@@ -107,17 +115,25 @@ export default function CharacterDetail() {
 
     const handleStatusChange = (status) => {
         if (status === 'Dead') {
-            setCharacter(prevState => ({
-                ...prevState,
-                status,
-                currentHp: 0
-            }));
+            setCharacter(prevState => ({ ...prevState, status, currentHp: 0 }));
         } else {
-            setCharacter(prevState => ({
-                ...prevState,
-                status
-            }));
+            setCharacter(prevState => ({ ...prevState, status }));
         }
+    };
+
+    const getStatBonuses = (stat) => {
+        const bonusField = STAT_BONUS_MAP[stat];
+        const bonuses = [];
+        (character.items || []).forEach(item => {
+            if (item.equipState && item[bonusField] && item[bonusField] > 0) {
+                bonuses.push({ name: item.name, value: item[bonusField] });
+            }
+        });
+        return bonuses;
+    };
+
+    const getTotalBonus = (stat) => {
+        return getStatBonuses(stat).reduce((sum, b) => sum + b.value, 0);
     };
 
     useEffect(() => {
@@ -197,7 +213,7 @@ export default function CharacterDetail() {
                 </div>
             ) : (
                 <div className="text-gray-300 mb-4">
-                    {character.race.name} {character.characterClass.name} • Level {character.level}
+                    {character.race.name} {character.characterClass.name} &bull; Level {character.level}
                 </div>
             )}
 
@@ -239,21 +255,39 @@ export default function CharacterDetail() {
                     <div className="bg-gray-700 p-4 rounded">
                         <h2 className="text-lg font-semibold text-yellow-200 mb-2">Abilities</h2>
                         <div className="grid grid-cols-2 gap-2 text-sm text-gray-300">
-                            {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map(stat => (
-                                <div key={stat} className="flex justify-between">
-                                    <span className="capitalize">{stat.slice(0, 3)}:</span>
-                                    {editing ? (
-                                        <input
-                                            type="number"
-                                            value={character[stat] || 10}
-                                            onChange={(e) => setCharacter({ ...character, [stat]: parseInt(e.target.value) || 0 })}
-                                            className="p-1 bg-gray-600 text-white rounded w-16"
-                                        />
-                                    ) : (
-                                        <span>{character[stat] || 10}</span>
-                                    )}
-                                </div>
-                            ))}
+                            {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map(stat => {
+                                const bonuses = getStatBonuses(stat);
+                                const totalBonus = getTotalBonus(stat);
+                                return (
+                                    <div key={stat} className="flex flex-col">
+                                        <div className="flex justify-between items-center">
+                                            <span className="capitalize font-semibold">{stat.slice(0, 3)}:</span>
+                                            {editing ? (
+                                                <input
+                                                    type="number"
+                                                    value={character[stat] || 10}
+                                                    onChange={(e) => setCharacter({ ...character, [stat]: parseInt(e.target.value) || 0 })}
+                                                    className="p-1 bg-gray-600 text-white rounded w-16"
+                                                />
+                                            ) : (
+                                                <span>
+                                                    {character[stat] || 10}
+                                                    {totalBonus > 0 && (
+                                                        <span className="text-green-400"> + {totalBonus}</span>
+                                                    )}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {!editing && bonuses.length > 0 && (
+                                            <div className="text-xs text-green-400 ml-2">
+                                                {bonuses.map((b, i) => (
+                                                    <span key={i}>{b.name} (+{b.value}){i < bonuses.length - 1 ? ', ' : ''}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -340,7 +374,7 @@ export default function CharacterDetail() {
                                     <button
                                         onClick={() => handleRemoveItem(item.id)}
                                         className="text-red-400 hover:text-red-600 text-xs"
-                                    >✕ Remove</button>
+                                    >&#10005; Remove</button>
                                 )}
                             </li>
                         ))}
@@ -377,7 +411,7 @@ export default function CharacterDetail() {
                                     <button
                                         onClick={() => handleRemoveSpell(spell.id)}
                                         className="text-red-400 hover:text-red-600 text-xs"
-                                    >✕ Remove</button>
+                                    >&#10005; Remove</button>
                                 )}
                             </li>
                         ))}

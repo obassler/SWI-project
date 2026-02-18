@@ -84,6 +84,32 @@ public class CharacterController {
         return ResponseEntity.ok(characterRepository.save(character));
     }
 
+    @PutMapping("/{id}/damage")
+    @Transactional
+    public ResponseEntity<Character> damageCharacter(@PathVariable int id, @RequestParam int amount) {
+        Character character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", id));
+        int newHp = Math.max(0, character.getCurrentHp() - amount);
+        character.setCurrentHp(newHp);
+        if (newHp == 0) {
+            character.setStatus("Dead");
+        }
+        return ResponseEntity.ok(characterRepository.save(character));
+    }
+
+    @PutMapping("/{id}/heal-amount")
+    @Transactional
+    public ResponseEntity<Character> healCharacterAmount(@PathVariable int id, @RequestParam int amount) {
+        Character character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", id));
+        int newHp = Math.min(character.getMaxHp(), character.getCurrentHp() + amount);
+        character.setCurrentHp(newHp);
+        if ("Dead".equalsIgnoreCase(character.getStatus()) && newHp > 0) {
+            character.setStatus("Alive");
+        }
+        return ResponseEntity.ok(characterRepository.save(character));
+    }
+
     @PutMapping("/heal-batch")
     @Transactional
     public ResponseEntity<List<Character>> healParty(@RequestBody List<Integer> characterIds) {

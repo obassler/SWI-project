@@ -139,6 +139,14 @@ export const api = {
         body: JSON.stringify(characterIds)
     }),
 
+    damageCharacter: (id, amount) => fetchApi(`/characters/${id}/damage?amount=${amount}`, {
+        method: 'PUT'
+    }),
+
+    healCharacterAmount: (id, amount) => fetchApi(`/characters/${id}/heal-amount?amount=${amount}`, {
+        method: 'PUT'
+    }),
+
     assignItemToCharacter: (characterId, itemId) =>
         fetchApi(`/characters/${characterId}/items/${itemId}`, { method: 'POST' }),
 
@@ -233,5 +241,9 @@ export const api = {
     }),
     deleteQuest: (id) => fetchApi(`/quests/${id}`, {
         method: 'DELETE'
+    }),
+
+    completeQuest: (id) => fetchApi(`/quests/${id}/complete`, {
+        method: 'PUT'
     })
 };
