@@ -53,6 +53,14 @@ public class Monster {
     @Column(name = "Type", nullable = false, length = 25)
     private String type;
 
+    @Min(0)
+    @Column(name = "ArmorClass", nullable = false)
+    private int armorClass = 10;
+
+    @Size(max = 10)
+    @Column(name = "ChallengeRating", length = 10)
+    private String challengeRating;
+
     @ManyToMany(mappedBy = "ownedMonsters")
     @JsonIgnoreProperties({"ownedMonsters", "items", "quests", "spells"})
     private List<Character> owners = new ArrayList<>();

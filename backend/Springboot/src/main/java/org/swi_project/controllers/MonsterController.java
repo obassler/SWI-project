@@ -52,6 +52,8 @@ public class MonsterController {
         monster.setBoss(updated.isBoss());
         monster.setAbilities(updated.getAbilities());
         monster.setType(updated.getType());
+        monster.setArmorClass(updated.getArmorClass());
+        monster.setChallengeRating(updated.getChallengeRating());
 
         log.debug("Updated monster id={}", id);
         return ResponseEntity.ok(monsterRepository.save(monster));

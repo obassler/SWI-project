@@ -152,6 +152,18 @@ export const api = {
             body: JSON.stringify({ itemId, equip })
         }),
 
+    deathSave: (id, success) => fetchApi(`/characters/${id}/death-save?success=${success}`, { method: 'POST' }),
+
+    updateConditions: (id, conditions) => fetchApi(`/characters/${id}/conditions`, {
+        method: 'PUT',
+        body: JSON.stringify(conditions)
+    }),
+
+    updateSpellSlots: (id, spellSlots) => fetchApi(`/characters/${id}/spell-slots`, {
+        method: 'PUT',
+        body: JSON.stringify(spellSlots)
+    }),
+
     getItems: () => fetchApi('/items'),
     createItem: (item) => fetchApi('/items', {
         method: 'POST',

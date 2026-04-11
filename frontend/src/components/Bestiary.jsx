@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
 const emptyForm = {
     name: '', description: '', health: '', attack: '', defense: '', boss: false, abilities: '', type: '',
+    armorClass: '', challengeRating: '',
 };
 
 export default function Bestiary() {
@@ -14,6 +16,7 @@ export default function Bestiary() {
     const [newMonster, setNewMonster] = useState({ ...emptyForm });
     const [editingMonsterId, setEditingMonsterId] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
 
     useEffect(() => { fetchMonsters(); }, []);
 
@@ -46,6 +49,7 @@ export default function Bestiary() {
             health: parseInt(newMonster.health),
             attack: parseInt(newMonster.attack),
             defense: parseInt(newMonster.defense),
+            armorClass: parseInt(newMonster.armorClass) || 10,
         };
         try {
             editingMonsterId
@@ -78,6 +82,8 @@ export default function Bestiary() {
             boss: mon.boss || false,
             abilities: mon.abilities || '',
             type: mon.type || '',
+            armorClass: mon.armorClass?.toString() || '10',
+            challengeRating: mon.challengeRating || '',
         });
         setShowForm(true);
     };
@@ -107,10 +113,14 @@ export default function Bestiary() {
                         <input key={field} name={field} value={newMonster[field]} onChange={handleInputChange} placeholder={field}
                                className="w-full p-2 rounded bg-gray-600 text-white" />
                     ))}
-                    {["health", "attack", "defense"].map(field => (
-                        <input key={field} type="number" name={field} value={newMonster[field]} onChange={handleInputChange} placeholder={field.toUpperCase()}
+                    {["health", "attack", "defense", "armorClass"].map(field => (
+                        <input key={field} type="number" name={field} value={newMonster[field]} onChange={handleInputChange}
+                               placeholder={field === 'armorClass' ? 'Armor Class' : field.toUpperCase()}
                                className="w-full p-2 rounded bg-gray-600 text-white" />
                     ))}
+                    <input name="challengeRating" value={newMonster.challengeRating} onChange={handleInputChange}
+                           placeholder="Challenge Rating (e.g. 1/4, 1, 5)"
+                           className="w-full p-2 rounded bg-gray-600 text-white" />
                     <label className="flex items-center gap-2">
                         <input type="checkbox" name="boss" checked={newMonster.boss} onChange={handleInputChange} /> Boss?
                     </label>
@@ -125,14 +135,20 @@ export default function Bestiary() {
 
             {error && monsters.length > 0 && <ErrorMessage message={error} onRetry={fetchMonsters} />}
 
-            <ul className="space-y-3">
-                {monsters.map(mon => (
+            <SearchSortBar
+                searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                sortOptions={[['name', 'Name'], ['type', 'Type'], ['health', 'HP'], ['armorClass', 'AC'], ['challengeRating', 'CR']]}
+            />
+
+            <ul className="space-y-3 mt-3">
+                {filterAndSort(monsters, ['name', 'type', 'description', 'abilities']).map(mon => (
                     <li key={mon.id} className="bg-gray-800 p-4 rounded">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h3 className="text-yellow-300 font-semibold">{mon.name} {mon.boss && <span className="text-red-500">(Boss)</span>}</h3>
                                 <p className="text-gray-300 text-sm">{mon.description}</p>
-                                <p className="text-gray-400 text-sm">Type: {mon.type} | HP: {mon.health}, ATK: {mon.attack}, DEF: {mon.defense}</p>
+                                <p className="text-gray-400 text-sm">Type: {mon.type} | AC: {mon.armorClass || 10} | HP: {mon.health} | ATK: {mon.attack} | DEF: {mon.defense}{mon.challengeRating ? ` | CR ${mon.challengeRating}` : ''}</p>
                                 <p className="text-blue-300 text-sm">Abilities: {mon.abilities}</p>
                             </div>
                             <div className="flex gap-3 text-lg">

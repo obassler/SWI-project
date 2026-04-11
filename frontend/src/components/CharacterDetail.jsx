@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { getModifier, formatModifier, getProficiencyBonus, XP_THRESHOLDS, D5E_CONDITIONS, D5E_SKILLS, parseSpellSlots, serializeSpellSlots } from '../dndUtils';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -35,7 +36,9 @@ export default function CharacterDetail() {
                 race: data.race || { name: 'Unknown' },
                 characterClass: data.characterClass || { name: 'Unknown' },
                 items: data.items || [],
-                spells: data.spells || []
+                spells: data.spells || [],
+                conditions: data.conditions || [],
+                skillProficiencies: data.skillProficiencies || [],
             });
         } catch (err) {
             setError('Failed to load character');
@@ -121,6 +124,30 @@ export default function CharacterDetail() {
         }
     };
 
+    const toggleSkillProficiency = (skillName) => {
+        setCharacter(prev => {
+            const current = new Set(prev.skillProficiencies || []);
+            if (current.has(skillName)) current.delete(skillName); else current.add(skillName);
+            return { ...prev, skillProficiencies: Array.from(current) };
+        });
+    };
+
+    const toggleCondition = (condition) => {
+        setCharacter(prev => {
+            const current = new Set(prev.conditions || []);
+            if (current.has(condition)) current.delete(condition); else current.add(condition);
+            return { ...prev, conditions: Array.from(current) };
+        });
+    };
+
+    const updateSpellSlotMax = (level, value) => {
+        const slots = parseSpellSlots(character.spellSlots);
+        const max = Math.max(0, parseInt(value) || 0);
+        slots[level] = { max, used: slots[level]?.used || 0 };
+        if (max === 0) delete slots[level];
+        setCharacter(prev => ({ ...prev, spellSlots: serializeSpellSlots(slots) }));
+    };
+
     const getStatBonuses = (stat) => {
         const bonusField = STAT_BONUS_MAP[stat];
         const bonuses = [];
@@ -144,6 +171,11 @@ export default function CharacterDetail() {
     if (loading) return <LoadingSpinner message="Loading character..." />;
     if (error) return <ErrorMessage message={error} onRetry={fetchCharacter} />;
     if (!character) return null;
+
+    const profBonus = getProficiencyBonus(character.level);
+    const currentXp = character.experiencePoints || 0;
+    const nextLevelXp = character.level < 20 ? XP_THRESHOLDS[character.level] : null;
+    const spellSlots = parseSpellSlots(character.spellSlots);
 
     return (
         <div className="space-y-6 p-4 max-w-5xl mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-xl shadow-2xl text-white min-h-screen">
@@ -191,6 +223,7 @@ export default function CharacterDetail() {
                         <option value="Gnome">Gnome</option>
                         <option value="Dragonborn">Dragonborn</option>
                         <option value="Half-Orc">Half-Orc</option>
+                        <option value="Tiefling">Tiefling</option>
                     </select>
                     <select
                         value={character.characterClass.name}
@@ -212,8 +245,11 @@ export default function CharacterDetail() {
                     </select>
                 </div>
             ) : (
-                <div className="text-gray-300 mb-4">
-                    {character.race.name} {character.characterClass.name} &bull; Level {character.level}
+                <div className="text-gray-300 mb-4 flex flex-wrap gap-3 items-center">
+                    <span>{character.race.name} {character.characterClass.name} &bull; Level {character.level}</span>
+                    <span className="text-blue-300">AC {character.armorClass || 10}</span>
+                    <span className="text-yellow-400">Proficiency {formatModifier(profBonus)}</span>
+                    <span className="text-purple-300">XP {currentXp.toLocaleString()}{nextLevelXp ? ` / ${nextLevelXp.toLocaleString()}` : ' (MAX)'}</span>
                 </div>
             )}
 
@@ -239,16 +275,32 @@ export default function CharacterDetail() {
                             />
                         </div>
                         {editing ? (
-                            <select
-                                value={character.status}
-                                onChange={(e) => handleStatusChange(e.target.value)}
-                                className="p-2 bg-gray-600 text-white rounded w-full"
-                            >
-                                <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
-                                <option value="REVIVED">Revived</option>
-                                <option value="DECEASED">Deceased</option>
-                            </select>
+                            <>
+                                <select
+                                    value={character.status}
+                                    onChange={(e) => handleStatusChange(e.target.value)}
+                                    className="p-2 bg-gray-600 text-white rounded w-full mb-2"
+                                >
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                    <option value="REVIVED">Revived</option>
+                                    <option value="DECEASED">Deceased</option>
+                                </select>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="text-xs text-gray-400">Armor Class</label>
+                                        <input type="number" value={character.armorClass || 10}
+                                            onChange={(e) => setCharacter({ ...character, armorClass: parseInt(e.target.value) || 0 })}
+                                            className="p-2 bg-gray-600 text-white rounded w-full" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-400">Experience Points</label>
+                                        <input type="number" value={character.experiencePoints || 0}
+                                            onChange={(e) => setCharacter({ ...character, experiencePoints: parseInt(e.target.value) || 0 })}
+                                            className="p-2 bg-gray-600 text-white rounded w-full" />
+                                    </div>
+                                </div>
+                            </>
                         ) : (
                             <p className="text-gray-300">Status: {character.status}</p>
                         )}
@@ -260,6 +312,8 @@ export default function CharacterDetail() {
                             {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'].map(stat => {
                                 const bonuses = getStatBonuses(stat);
                                 const totalBonus = getTotalBonus(stat);
+                                const total = (character[stat] || 10) + totalBonus;
+                                const mod = getModifier(total);
                                 return (
                                     <div key={stat} className="flex flex-col">
                                         <div className="flex justify-between items-center">
@@ -277,6 +331,7 @@ export default function CharacterDetail() {
                                                     {totalBonus > 0 && (
                                                         <span className="text-green-400"> + {totalBonus}</span>
                                                     )}
+                                                    <span className="text-yellow-300 ml-1">({formatModifier(mod)})</span>
                                                 </span>
                                             )}
                                         </div>
@@ -291,6 +346,86 @@ export default function CharacterDetail() {
                                 );
                             })}
                         </div>
+                    </div>
+                </div>
+
+                {(editing || (character.conditions && character.conditions.length > 0)) && (
+                    <div className="bg-gray-700 p-4 rounded">
+                        <h2 className="text-lg font-semibold text-yellow-200 mb-2">Conditions</h2>
+                        <div className="flex flex-wrap gap-2">
+                            {D5E_CONDITIONS.map(c => {
+                                const active = (character.conditions || []).includes(c);
+                                return (
+                                    <button key={c}
+                                        onClick={() => editing && toggleCondition(c)}
+                                        className={`text-xs px-2 py-1 rounded ${
+                                            active ? 'bg-red-700 text-red-100' : editing ? 'bg-gray-600 text-gray-400 hover:bg-gray-500' : 'hidden'
+                                        } ${!editing && active ? 'cursor-default' : ''}`}
+                                        disabled={!editing}
+                                    >
+                                        {c}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                <div className="bg-gray-700 p-4 rounded">
+                    <h2 className="text-lg font-semibold text-yellow-200 mb-2">Skills</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-sm">
+                        {D5E_SKILLS.map(skill => {
+                            const proficient = (character.skillProficiencies || []).includes(skill.name);
+                            const abilityScore = character[skill.ability] || 10;
+                            const totalBonus = getTotalBonus(skill.ability);
+                            const mod = getModifier(abilityScore + totalBonus);
+                            const skillMod = proficient ? mod + profBonus : mod;
+                            return (
+                                <div key={skill.name} className="flex items-center gap-1">
+                                    {editing ? (
+                                        <input type="checkbox" checked={proficient}
+                                            onChange={() => toggleSkillProficiency(skill.name)}
+                                            className="w-3 h-3" />
+                                    ) : (
+                                        <span className={`w-3 text-center ${proficient ? 'text-green-400' : 'text-gray-600'}`}>
+                                            {proficient ? '\u25C9' : '\u25CB'}
+                                        </span>
+                                    )}
+                                    <span className={`text-xs ${proficient ? 'text-green-300' : 'text-gray-400'}`}>
+                                        {formatModifier(skillMod)} {skill.name}
+                                    </span>
+                                    <span className="text-xs text-gray-600">({skill.ability.slice(0, 3).toUpperCase()})</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="bg-gray-700 p-4 rounded">
+                    <h2 className="text-lg font-semibold text-yellow-200 mb-2">Spell Slots</h2>
+                    <div className="grid grid-cols-3 md:grid-cols-9 gap-2">
+                        {[1,2,3,4,5,6,7,8,9].map(level => {
+                            const slot = spellSlots[level] || { max: 0, used: 0 };
+                            return (
+                                <div key={level} className="text-center">
+                                    <div className="text-xs text-gray-400 mb-1">Lvl {level}</div>
+                                    {editing ? (
+                                        <input type="number" min="0" max="9"
+                                            value={slot.max}
+                                            onChange={(e) => updateSpellSlotMax(level, e.target.value)}
+                                            className="w-full p-1 bg-gray-600 text-white rounded text-xs text-center" />
+                                    ) : (
+                                        <div className="flex justify-center gap-0.5">
+                                            {slot.max > 0 ? Array.from({ length: slot.max }, (_, i) => (
+                                                <span key={i} className={`w-3 h-3 rounded-full inline-block ${
+                                                    i < slot.max - (slot.used || 0) ? 'bg-purple-500' : 'bg-gray-600'
+                                                }`} />
+                                            )) : <span className="text-gray-600 text-xs">-</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -408,7 +543,7 @@ export default function CharacterDetail() {
                     <ul className="space-y-2 mb-4 text-sm text-gray-200">
                         {character.spells.map(spell => (
                             <li key={spell.id} className="bg-gray-800 p-2 rounded flex justify-between items-center">
-                                <span>{spell.name}</span>
+                                <span>{spell.name} <span className="text-gray-500 text-xs">Lvl {spell.level} {spell.type}</span></span>
                                 {editing && (
                                     <button
                                         onClick={() => handleRemoveSpell(spell.id)}

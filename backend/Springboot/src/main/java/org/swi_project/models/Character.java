@@ -7,7 +7,9 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -97,6 +99,37 @@ public class Character {
     @Size(max = 2000)
     @Column(name = "Notes", nullable = false, length = 2000)
     private String notes;
+
+    @Min(0)
+    @Column(name = "ArmorClass", nullable = false)
+    private int armorClass = 10;
+
+    @Min(0)
+    @Column(name = "ExperiencePoints", nullable = false)
+    private int experiencePoints = 0;
+
+    @Min(0)
+    @Max(3)
+    @Column(name = "DeathSaveSuccesses", nullable = false)
+    private int deathSaveSuccesses = 0;
+
+    @Min(0)
+    @Max(3)
+    @Column(name = "DeathSaveFailures", nullable = false)
+    private int deathSaveFailures = 0;
+
+    @Column(name = "SpellSlots", length = 500)
+    private String spellSlots;
+
+    @ElementCollection
+    @CollectionTable(name = "character_conditions", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "condition_name")
+    private Set<String> conditions = new HashSet<>();
+
+    @ElementCollection
+    @CollectionTable(name = "character_skill_proficiencies", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "skill_name")
+    private Set<String> skillProficiencies = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

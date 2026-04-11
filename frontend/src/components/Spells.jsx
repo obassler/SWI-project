@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import { D5E_SPELL_SCHOOLS } from '../dndUtils';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -9,13 +11,14 @@ export default function Spells() {
         name: '',
         description: '',
         type: '',
-        level: 1
+        level: 0
     });
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitLoading, setSubmitLoading] = useState(false);
     const [error, setError] = useState(null);
     const [editingSpellId, setEditingSpellId] = useState(null);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
 
     useEffect(() => {
         fetchSpells();
@@ -43,7 +46,7 @@ export default function Spells() {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', description: '', type: '', level: 1 });
+        setFormData({ name: '', description: '', type: '', level: 0 });
         setEditingSpellId(null);
         setShowForm(false);
     };
@@ -104,7 +107,7 @@ export default function Spells() {
                 onClick={() => {
                     if (editingSpellId) {
                         setEditingSpellId(null);
-                        setFormData({ name: '', type: '', description: '', level: 1 });
+                        setFormData({ name: '', type: '', description: '', level: 0 });
                     }
                     setShowForm(!showForm);
                 }}
@@ -141,25 +144,28 @@ export default function Spells() {
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Type</label>
-                        <input
-                            type="text"
+                        <label className="block text-gray-300 mb-1">School of Magic</label>
+                        <select
                             name="type"
                             value={formData.type}
                             onChange={handleInputChange}
-                            maxLength="25"
                             required
                             className="w-full p-2 bg-gray-600 text-white rounded"
-                        />
+                        >
+                            <option value="">Select school...</option>
+                            {D5E_SPELL_SCHOOLS.map(school => (
+                                <option key={school} value={school}>{school}</option>
+                            ))}
+                        </select>
                     </div>
                     <div>
-                        <label className="block text-gray-300 mb-1">Level (1-9)</label>
+                        <label className="block text-gray-300 mb-1">Level (0 = Cantrip, 1-9)</label>
                         <input
                             type="number"
                             name="level"
                             value={formData.level}
                             onChange={handleInputChange}
-                            min="1"
+                            min="0"
                             max="9"
                             required
                             className="w-full p-2 bg-gray-600 text-white rounded"
@@ -194,13 +200,18 @@ export default function Spells() {
             ) : (
                 <div>
                     <p className="mb-2 text-sm text-gray-400">Total spells: {spells.length}</p>
-                    <ul className="space-y-3">
-                        {spells.map(spell => (
+                    <SearchSortBar
+                        searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                        sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                        sortOptions={[['name', 'Name'], ['type', 'School'], ['level', 'Level']]}
+                    />
+                    <ul className="space-y-3 mt-3">
+                        {filterAndSort(spells, ['name', 'type', 'description']).map(spell => (
                             <li key={spell.id} className="bg-gray-800 p-4 rounded">
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h3 className="text-yellow-300 font-semibold">{spell.name}</h3>
-                                        <p className="text-gray-400 text-sm">Type: {spell.type} | Level: {spell.level}</p>
+                                        <p className="text-gray-400 text-sm">{spell.type} | {spell.level === 0 ? 'Cantrip' : `Level ${spell.level}`}</p>
                                         {spell.description && (
                                             <p className="text-gray-300 text-sm">{spell.description}</p>
                                         )}

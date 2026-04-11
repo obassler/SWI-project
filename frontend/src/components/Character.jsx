@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
 const races = [
-    'Human', 'Elf', 'Dwarf', 'Half-Elf', 'Halfling', 'Gnome', 'Dragonborn', 'Half-Orc'
+    'Human', 'Elf', 'Dwarf', 'Half-Elf', 'Halfling', 'Gnome', 'Dragonborn', 'Half-Orc', 'Tiefling'
 ];
 
 const classes = [
@@ -42,6 +43,7 @@ export default function CharacterManager() {
 
     const [availableItems, setAvailableItems] = useState([]);
     const [availableSpells, setAvailableSpells] = useState([]);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
     const [selectedItemId, setSelectedItemId] = useState('');
     const [selectedSpellId, setSelectedSpellId] = useState('');
 
@@ -240,9 +242,14 @@ export default function CharacterManager() {
             </header>
 
             <section aria-label="Character List">
-                <ul className="space-y-3 max-h-96 overflow-y-auto">
+                <SearchSortBar
+                    searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                    sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                    sortOptions={[['name', 'Name'], ['level', 'Level'], ['status', 'Status']]}
+                />
+                <ul className="space-y-3 max-h-96 overflow-y-auto mt-3">
                     {characters.length ? (
-                        characters.map((char) => (
+                        filterAndSort(characters, ['name', c => c.race?.name, c => c.characterClass?.name, 'status']).map((char) => (
                             <li
                                 key={char.id}
                                 className="bg-gray-700 p-4 rounded flex justify-between items-center shadow-lg hover:bg-gray-600 transition"

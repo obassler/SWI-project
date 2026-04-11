@@ -70,6 +70,19 @@ public class CharacterController {
         character.setCharisma(updatedCharacter.getCharisma());
         character.setCurrentHp(updatedCharacter.getCurrentHp());
         character.setMaxHp(updatedCharacter.getMaxHp());
+        character.setArmorClass(updatedCharacter.getArmorClass());
+        character.setExperiencePoints(updatedCharacter.getExperiencePoints());
+        character.setDeathSaveSuccesses(updatedCharacter.getDeathSaveSuccesses());
+        character.setDeathSaveFailures(updatedCharacter.getDeathSaveFailures());
+        character.setSpellSlots(updatedCharacter.getSpellSlots());
+        character.getConditions().clear();
+        if (updatedCharacter.getConditions() != null) {
+            character.getConditions().addAll(updatedCharacter.getConditions());
+        }
+        character.getSkillProficiencies().clear();
+        if (updatedCharacter.getSkillProficiencies() != null) {
+            character.getSkillProficiencies().addAll(updatedCharacter.getSkillProficiencies());
+        }
 
         log.debug("Updated character id={}", id);
         return ResponseEntity.ok(characterRepository.save(character));
@@ -82,6 +95,8 @@ public class CharacterController {
                 .orElseThrow(() -> new ResourceNotFoundException("Character", id));
         character.setCurrentHp(character.getMaxHp());
         character.setStatus(CharacterStatus.ACTIVE);
+        character.setDeathSaveSuccesses(0);
+        character.setDeathSaveFailures(0);
         return ResponseEntity.ok(characterRepository.save(character));
     }
 
@@ -118,8 +133,57 @@ public class CharacterController {
         for (Character character : characters) {
             character.setCurrentHp(character.getMaxHp());
             character.setStatus(CharacterStatus.ACTIVE);
+            character.setDeathSaveSuccesses(0);
+            character.setDeathSaveFailures(0);
         }
         return ResponseEntity.ok(characterRepository.saveAll(characters));
+    }
+
+    @PostMapping("/{id}/death-save")
+    @Transactional
+    public ResponseEntity<Character> deathSave(@PathVariable int id, @RequestParam boolean success) {
+        Character character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", id));
+        if (success) {
+            character.setDeathSaveSuccesses(character.getDeathSaveSuccesses() + 1);
+            if (character.getDeathSaveSuccesses() >= 3) {
+                character.setStatus(CharacterStatus.ACTIVE);
+                character.setCurrentHp(1);
+                character.setDeathSaveSuccesses(0);
+                character.setDeathSaveFailures(0);
+            }
+        } else {
+            character.setDeathSaveFailures(character.getDeathSaveFailures() + 1);
+            if (character.getDeathSaveFailures() >= 3) {
+                character.setStatus(CharacterStatus.DECEASED);
+                character.setDeathSaveSuccesses(0);
+                character.setDeathSaveFailures(0);
+            }
+        }
+        return ResponseEntity.ok(characterRepository.save(character));
+    }
+
+    @PutMapping("/{id}/conditions")
+    @Transactional
+    public ResponseEntity<Character> updateConditions(@PathVariable int id, @RequestBody java.util.Set<String> conditions) {
+        Character character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", id));
+        character.getConditions().clear();
+        character.getConditions().addAll(conditions);
+        return ResponseEntity.ok(characterRepository.save(character));
+    }
+
+    @PutMapping("/{id}/spell-slots")
+    @Transactional
+    public ResponseEntity<Character> updateSpellSlots(@PathVariable int id, @RequestBody Map<String, Object> body) {
+        Character character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Character", id));
+        try {
+            character.setSpellSlots(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(body));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(characterRepository.save(character));
     }
 
     @DeleteMapping("/{id}")

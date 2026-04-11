@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
+import { getModifier, formatModifier, getProficiencyBonus, D5E_CONDITIONS, parseSpellSlots, resetSpellSlots } from '../dndUtils';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -16,12 +17,133 @@ function HpBar({ current, max }) {
     );
 }
 
-function StatWithBonus({ label, base, bonus }) {
+function StatBlock({ label, base, bonus }) {
+    const total = base + bonus;
+    const mod = getModifier(total);
     return (
-        <span className="mr-3">
-            {label} {base}
-            {bonus > 0 && <span className="text-green-400"> +{bonus}</span>}
+        <span className="mr-2 text-xs">
+            {label} {base}{bonus > 0 && <span className="text-green-400">+{bonus}</span>}
+            <span className="text-yellow-300 ml-0.5">({formatModifier(mod)})</span>
         </span>
+    );
+}
+
+function DeathSaves({ character, onSave }) {
+    const successes = character.deathSaveSuccesses || 0;
+    const failures = character.deathSaveFailures || 0;
+    return (
+        <div className="mt-2 p-2 bg-gray-900 rounded border border-red-800">
+            <div className="text-xs font-semibold text-red-400 mb-1">Death Saving Throws</div>
+            <div className="flex items-center gap-3 text-xs">
+                <div>
+                    <span className="text-green-400 mr-1">Pass:</span>
+                    {[0, 1, 2].map(i => (
+                        <span key={i} className={i < successes ? 'text-green-400' : 'text-gray-600'}>{i < successes ? '\u25C9' : '\u25CB'} </span>
+                    ))}
+                </div>
+                <div>
+                    <span className="text-red-400 mr-1">Fail:</span>
+                    {[0, 1, 2].map(i => (
+                        <span key={i} className={i < failures ? 'text-red-400' : 'text-gray-600'}>{i < failures ? '\u25C9' : '\u25CB'} </span>
+                    ))}
+                </div>
+                <button onClick={() => onSave(character.id, true)} className="px-2 py-0.5 bg-green-700 rounded hover:bg-green-600 text-xs">Pass</button>
+                <button onClick={() => onSave(character.id, false)} className="px-2 py-0.5 bg-red-700 rounded hover:bg-red-600 text-xs">Fail</button>
+            </div>
+        </div>
+    );
+}
+
+function SpellSlotTracker({ character, onUseSlot, onRestoreSlot }) {
+    const slots = parseSpellSlots(character.spellSlots);
+    const levels = Object.keys(slots).sort((a, b) => Number(a) - Number(b));
+    if (levels.length === 0) return null;
+
+    return (
+        <div className="mt-2">
+            <div className="text-xs text-gray-400 mb-1">Spell Slots:</div>
+            <div className="flex flex-wrap gap-1">
+                {levels.map(level => {
+                    const { max, used } = slots[level];
+                    if (max === 0) return null;
+                    const remaining = max - (used || 0);
+                    return (
+                        <div key={level} className="flex items-center gap-0.5 bg-gray-900 px-1.5 py-0.5 rounded text-xs">
+                            <span className="text-purple-300 mr-1">{level}:</span>
+                            {Array.from({ length: max }, (_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => i < remaining ? onUseSlot(character.id, level) : onRestoreSlot(character.id, level)}
+                                    className={`w-3 h-3 rounded-full border ${i < remaining ? 'bg-purple-500 border-purple-400 hover:bg-purple-700' : 'bg-gray-700 border-gray-500 hover:bg-purple-900'}`}
+                                    title={i < remaining ? 'Click to use slot' : 'Click to restore slot'}
+                                />
+                            ))}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function ConditionBadges({ character, onToggle }) {
+    const conditions = character.conditions || [];
+    const [showPicker, setShowPicker] = useState(false);
+    const available = D5E_CONDITIONS.filter(c => !conditions.includes(c));
+
+    return (
+        <div className="mt-1">
+            <div className="flex flex-wrap gap-1 items-center">
+                {conditions.map(c => (
+                    <button key={c} onClick={() => onToggle(character.id, c, false)}
+                        className="text-xs px-1.5 py-0.5 rounded bg-red-900 text-red-200 hover:bg-red-700" title="Click to remove">
+                        {c} \u00d7
+                    </button>
+                ))}
+                <button onClick={() => setShowPicker(!showPicker)}
+                    className="text-xs px-1.5 py-0.5 rounded bg-gray-600 text-gray-300 hover:bg-gray-500">
+                    {showPicker ? '\u2212' : '+'}
+                </button>
+            </div>
+            {showPicker && available.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                    {available.map(c => (
+                        <button key={c} onClick={() => { onToggle(character.id, c, true); setShowPicker(false); }}
+                            className="text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">
+                            {c}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function InitiativeTracker({ entries, currentTurn, onNext, onPrev, onClear }) {
+    if (entries.length === 0) return null;
+    return (
+        <div className="bg-gray-700 p-3 rounded">
+            <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm text-yellow-200 font-semibold">Initiative Order</h2>
+                <div className="flex gap-1">
+                    <button onClick={onPrev} className="px-2 py-0.5 bg-gray-600 rounded hover:bg-gray-500 text-xs">&larr; Prev</button>
+                    <button onClick={onNext} className="px-2 py-0.5 bg-yellow-600 rounded hover:bg-yellow-700 text-xs">Next &rarr;</button>
+                    <button onClick={onClear} className="px-2 py-0.5 bg-red-600 rounded hover:bg-red-700 text-xs">Clear</button>
+                </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+                {entries.map((entry, i) => (
+                    <div key={entry.key} className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
+                        i === currentTurn ? 'bg-yellow-600 text-black font-bold' :
+                        entry.dead ? 'bg-gray-800 text-gray-500 line-through opacity-50' :
+                        entry.type === 'character' ? 'bg-blue-900 text-blue-200' : 'bg-red-900 text-red-200'
+                    }`}>
+                        <span className="font-mono">{entry.initiative}</span>
+                        <span>{entry.name}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 
@@ -49,6 +171,8 @@ export default function Dashboard() {
     const [combatLog, setCombatLog] = useState([]);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [initiativeEntries, setInitiativeEntries] = useState([]);
+    const [currentTurn, setCurrentTurn] = useState(0);
     const logEndRef = useRef(null);
 
     const addLog = (message) => {
@@ -137,6 +261,8 @@ export default function Dashboard() {
         setHostileNpcIds([]);
         setMonsterDamageInputs({});
         setMonsterHealInputs({});
+        setInitiativeEntries([]);
+        setCurrentTurn(0);
     };
 
     const toggleNpcHostility = (npcId) => {
@@ -152,6 +278,47 @@ export default function Dashboard() {
         const total = roll + mod;
         const modStr = mod !== 0 ? ` ${mod >= 0 ? '+' : ''}${mod} = ${total}` : '';
         addLog(`Rolled ${diceType}: ${roll}${modStr}`);
+    };
+
+    const rollInitiative = () => {
+        const entries = [];
+        const selected = characters.filter(c => selectedCharacterIds.includes(c.id));
+        for (const char of selected) {
+            const bonuses = getEquippedBonuses(char);
+            const dexMod = getModifier(char.dexterity + bonuses.dexterity);
+            const roll = Math.floor(Math.random() * 20) + 1;
+            entries.push({
+                key: `char-${char.id}`,
+                id: char.id,
+                name: char.name,
+                type: 'character',
+                initiative: roll + dexMod,
+                roll,
+                modifier: dexMod,
+                dead: char.currentHp === 0 || char.status === 'DECEASED'
+            });
+        }
+        for (const m of combatMonsters) {
+            if (m.dead) continue;
+            const roll = Math.floor(Math.random() * 20) + 1;
+            entries.push({
+                key: `mon-${m.instanceId}`,
+                instanceId: m.instanceId,
+                name: m.label,
+                type: 'monster',
+                initiative: roll,
+                roll,
+                modifier: 0,
+                dead: false
+            });
+        }
+        entries.sort((a, b) => b.initiative - a.initiative);
+        setInitiativeEntries(entries);
+        setCurrentTurn(0);
+        entries.forEach(e => {
+            const modStr = e.modifier !== 0 ? ` (${formatModifier(e.modifier)})` : '';
+            addLog(`Initiative: ${e.name} rolled ${e.roll}${modStr} = ${e.initiative}`);
+        });
     };
 
     const getEquippedBonuses = (character) => {
@@ -245,17 +412,82 @@ export default function Dashboard() {
         }
     };
 
+    const handleDeathSave = async (charId, success) => {
+        try {
+            const updated = await api.deathSave(charId, success);
+            setCharacters(prev => prev.map(c => c.id === updated.id ? updated : c));
+            const char = characters.find(c => c.id === charId);
+            const result = success ? 'SUCCESS' : 'FAILURE';
+            addLog(`Death Save for ${char?.name}: ${result} (${updated.deathSaveSuccesses}/3 pass, ${updated.deathSaveFailures}/3 fail)`);
+            if (updated.deathSaveSuccesses >= 3) addLog(`${char?.name} stabilized!`);
+            if (updated.deathSaveFailures >= 3) addLog(`${char?.name} has died.`);
+        } catch (err) {
+            setError(`Failed to save death save: ${err.message}`);
+        }
+    };
+
+    const handleConditionToggle = async (charId, condition, add) => {
+        const char = characters.find(c => c.id === charId);
+        if (!char) return;
+        const current = new Set(char.conditions || []);
+        if (add) current.add(condition); else current.delete(condition);
+        try {
+            const updated = await api.updateConditions(charId, Array.from(current));
+            setCharacters(prev => prev.map(c => c.id === updated.id ? updated : c));
+            addLog(`${add ? 'Applied' : 'Removed'} ${condition} ${add ? 'to' : 'from'} ${char.name}`);
+        } catch (err) {
+            setError(`Failed to update conditions: ${err.message}`);
+        }
+    };
+
+    const handleUseSpellSlot = async (charId, level) => {
+        const char = characters.find(c => c.id === charId);
+        if (!char) return;
+        const slots = parseSpellSlots(char.spellSlots);
+        if (!slots[level]) return;
+        const remaining = slots[level].max - (slots[level].used || 0);
+        if (remaining <= 0) return;
+        slots[level].used = (slots[level].used || 0) + 1;
+        try {
+            const updated = await api.updateSpellSlots(charId, slots);
+            setCharacters(prev => prev.map(c => c.id === updated.id ? updated : c));
+            addLog(`${char.name} used a level ${level} spell slot (${slots[level].max - slots[level].used}/${slots[level].max} remaining)`);
+        } catch (err) {
+            setError(`Failed to update spell slots: ${err.message}`);
+        }
+    };
+
+    const handleRestoreSpellSlot = async (charId, level) => {
+        const char = characters.find(c => c.id === charId);
+        if (!char) return;
+        const slots = parseSpellSlots(char.spellSlots);
+        if (!slots[level] || (slots[level].used || 0) <= 0) return;
+        slots[level].used = slots[level].used - 1;
+        try {
+            const updated = await api.updateSpellSlots(charId, slots);
+            setCharacters(prev => prev.map(c => c.id === updated.id ? updated : c));
+        } catch (err) {
+            setError(`Failed to update spell slots: ${err.message}`);
+        }
+    };
+
     const healParty = async () => {
         if (selectedCharacterIds.length === 0) return;
         try {
             const healed = await api.healParty(selectedCharacterIds);
-            setCharacters(prev =>
-                prev.map(c => {
-                    const healedChar = healed.find(h => h.id === c.id);
-                    return healedChar || c;
-                })
-            );
-            addLog(`Long Rest: Fully healed ${healed.length} party member(s)`);
+            const selected = characters.filter(c => selectedCharacterIds.includes(c.id));
+            for (const char of selected) {
+                if (char.spellSlots) {
+                    const resetSlots = resetSpellSlots(char.spellSlots);
+                    try { await api.updateSpellSlots(char.id, JSON.parse(resetSlots)); } catch {}
+                }
+                if (char.conditions && char.conditions.length > 0) {
+                    try { await api.updateConditions(char.id, []); } catch {}
+                }
+            }
+            const refreshed = await api.getCharacters();
+            setCharacters(refreshed);
+            addLog(`Long Rest: Fully healed ${healed.length} party member(s), restored spell slots, cleared conditions`);
         } catch (err) {
             setError(`Failed to heal party: ${err.message}`);
         }
@@ -336,8 +568,21 @@ export default function Dashboard() {
                     <button onClick={rollDice} className="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700 text-sm font-semibold">
                         Roll
                     </button>
+                    {selectedCharacters.length > 0 && combatMonsters.length > 0 && (
+                        <button onClick={rollInitiative} className="px-3 py-1 bg-orange-600 rounded hover:bg-orange-700 text-sm font-semibold">
+                            Roll Initiative
+                        </button>
+                    )}
                 </div>
             </div>
+
+            <InitiativeTracker
+                entries={initiativeEntries}
+                currentTurn={currentTurn}
+                onNext={() => setCurrentTurn(prev => (prev + 1) % initiativeEntries.length)}
+                onPrev={() => setCurrentTurn(prev => (prev - 1 + initiativeEntries.length) % initiativeEntries.length)}
+                onClear={() => { setInitiativeEntries([]); setCurrentTurn(0); }}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-4">
@@ -360,6 +605,8 @@ export default function Dashboard() {
                             {selectedCharacters.map((char) => {
                                 const bonuses = getEquippedBonuses(char);
                                 const isDead = char.currentHp === 0 || char.status === 'DECEASED';
+                                const isUnconscious = char.currentHp === 0 && char.status !== 'DECEASED';
+                                const profBonus = getProficiencyBonus(char.level);
                                 return (
                                     <div key={char.id} className={`bg-gray-800 p-3 rounded ${isDead ? 'opacity-60' : ''}`}>
                                         <div className="flex justify-between items-start mb-1">
@@ -368,6 +615,8 @@ export default function Dashboard() {
                                                 <span className="text-gray-400 text-sm ml-2">
                                                     {char.race?.name} {char.characterClass?.name} Lvl {char.level}
                                                 </span>
+                                                <span className="text-xs ml-2 text-blue-300">AC {char.armorClass || 10}</span>
+                                                <span className="text-xs ml-1 text-yellow-400">Prof {formatModifier(profBonus)}</span>
                                                 {isDead && <span className="text-red-400 text-sm ml-2 font-bold">DEAD</span>}
                                             </div>
                                             <button
@@ -381,13 +630,21 @@ export default function Dashboard() {
                                         <HpBar current={char.currentHp} max={char.maxHp} />
 
                                         <div className="text-xs text-gray-300 mt-2 flex flex-wrap">
-                                            <StatWithBonus label="STR" base={char.strength} bonus={bonuses.strength} />
-                                            <StatWithBonus label="DEX" base={char.dexterity} bonus={bonuses.dexterity} />
-                                            <StatWithBonus label="CON" base={char.constitution} bonus={bonuses.constitution} />
-                                            <StatWithBonus label="INT" base={char.intelligence} bonus={bonuses.intelligence} />
-                                            <StatWithBonus label="WIS" base={char.wisdom} bonus={bonuses.wisdom} />
-                                            <StatWithBonus label="CHA" base={char.charisma} bonus={bonuses.charisma} />
+                                            <StatBlock label="STR" base={char.strength} bonus={bonuses.strength} />
+                                            <StatBlock label="DEX" base={char.dexterity} bonus={bonuses.dexterity} />
+                                            <StatBlock label="CON" base={char.constitution} bonus={bonuses.constitution} />
+                                            <StatBlock label="INT" base={char.intelligence} bonus={bonuses.intelligence} />
+                                            <StatBlock label="WIS" base={char.wisdom} bonus={bonuses.wisdom} />
+                                            <StatBlock label="CHA" base={char.charisma} bonus={bonuses.charisma} />
                                         </div>
+
+                                        <ConditionBadges character={char} onToggle={handleConditionToggle} />
+
+                                        <SpellSlotTracker character={char} onUseSlot={handleUseSpellSlot} onRestoreSlot={handleRestoreSpellSlot} />
+
+                                        {isUnconscious && (
+                                            <DeathSaves character={char} onSave={handleDeathSave} />
+                                        )}
 
                                         {char.items && char.items.length > 0 && (
                                             <div className="mt-2">
@@ -395,7 +652,7 @@ export default function Dashboard() {
                                                 <div className="flex flex-wrap gap-1">
                                                     {char.items.map(item => {
                                                         const equippable = ['WEAPON','ARMOR','SHIELD','RING','AMULET','CLOTHING']
-                                                            .includes(item.type?.toUpperCase());
+                                                            .includes(item.type?.toUpperCase?.() || item.type);
                                                         return equippable ? (
                                                             <button
                                                                 key={item.id}
@@ -522,7 +779,8 @@ export default function Dashboard() {
                                                     {m.label} {m.monster.boss ? '(BOSS)' : ''}
                                                 </span>
                                                 <span className="text-xs text-gray-400">
-                                                    ATK {m.monster.attack} | DEF {m.monster.defense}
+                                                    AC {m.monster.armorClass || 10} | ATK {m.monster.attack} | DEF {m.monster.defense}
+                                                    {m.monster.challengeRating && ` | CR ${m.monster.challengeRating}`}
                                                 </span>
                                             </div>
                                             <HpBar current={m.currentHp} max={m.maxHp} />
