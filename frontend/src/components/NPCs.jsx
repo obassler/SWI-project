@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -16,6 +17,7 @@ export default function NPCs() {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [error, setError] = useState(null);
     const [editingNpcId, setEditingNpcId] = useState(null);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
 
     useEffect(() => {
         fetchNpcs();
@@ -179,8 +181,14 @@ export default function NPCs() {
             {npcs.length === 0 ? (
                 <p className="text-gray-400">No NPCs found.</p>
             ) : (
-                <ul className="space-y-3">
-                    {npcs.map(npc => (
+                <>
+                <SearchSortBar
+                    searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                    sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                    sortOptions={[['name', 'Name'], ['role', 'Role'], ['hostility', 'Hostility']]}
+                />
+                <ul className="space-y-3 mt-3">
+                    {filterAndSort(npcs, ['name', 'role', 'description']).map(npc => (
                         <li key={npc.id} className="bg-gray-800 p-4 rounded">
                             <div className="flex justify-between items-start">
                                 <div>
@@ -204,6 +212,7 @@ export default function NPCs() {
                         </li>
                     ))}
                 </ul>
+                </>
             )}
         </div>
     );

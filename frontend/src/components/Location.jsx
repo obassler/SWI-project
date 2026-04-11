@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -14,6 +15,7 @@ export default function Location() {
     const [formData, setFormData] = useState({
         name: '', description: '', npcIds: [], monsterQuantities: {}
     });
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
 
     useEffect(() => { fetchData(); }, []);
 
@@ -210,8 +212,14 @@ export default function Location() {
 
             {error && locations.length > 0 && <ErrorMessage message={error} />}
 
-            <ul className="space-y-3">
-                {locations.map(location => (
+            <SearchSortBar
+                searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                sortOptions={[['name', 'Name']]}
+            />
+
+            <ul className="space-y-3 mt-3">
+                {filterAndSort(locations, ['name', 'description']).map(location => (
                     <li key={location.id} className="bg-gray-800 p-4 rounded">
                         {editingLocation === location.id ? (
                             <div>

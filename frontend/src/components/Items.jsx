@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -19,6 +20,7 @@ export default function Items() {
     const [newItem, setNewItem] = useState({ ...emptyForm });
     const [editingItemId, setEditingItemId] = useState(null);
     const [showForm, setShowForm] = useState(false);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('name');
 
     useEffect(() => { fetchItems(); }, []);
 
@@ -158,8 +160,14 @@ export default function Items() {
 
             {error && <ErrorMessage message={error} onRetry={fetchItems} />}
 
-            <ul className="space-y-3">
-                {items.map(item => (
+            <SearchSortBar
+                searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                sortOptions={[['name', 'Name'], ['type', 'Type'], ['weight', 'Weight'], ['goldValue', 'Gold']]}
+            />
+
+            <ul className="space-y-3 mt-3">
+                {filterAndSort(items, ['name', 'type', 'description', 'magicalProperties']).map(item => (
                     <li key={item.id} className="bg-gray-800 p-4 rounded">
                         <div className="flex justify-between items-start">
                             <div>

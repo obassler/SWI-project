@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
+import SearchSortBar, { useSearchSort } from './SearchSortBar';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorMessage from './ErrorMessage';
 
@@ -19,6 +20,7 @@ export default function Quests() {
     const [isEditing, setIsEditing] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const timeoutRef = useRef(null);
+    const { searchTerm, setSearchTerm, sortField, sortDirection, handleSort, filterAndSort } = useSearchSort('title');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -198,9 +200,14 @@ export default function Quests() {
                 <p className="mb-2 text-sm text-gray-400">
                     {quests.length} {quests.length === 1 ? 'quest' : 'quests'} total
                 </p>
-                <ul className="space-y-3">
+                <SearchSortBar
+                    searchTerm={searchTerm} onSearchChange={setSearchTerm}
+                    sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
+                    sortOptions={[['title', 'Title'], ['type', 'Type'], ['completion', 'Status']]}
+                />
+                <ul className="space-y-3 mt-3">
                     {quests.length > 0 ? (
-                        quests.map((q) => (
+                        filterAndSort(quests, ['title', 'description', 'type']).map((q) => (
                             <li
                                 key={q.id}
                                 className={`bg-gray-800 p-4 rounded ${
