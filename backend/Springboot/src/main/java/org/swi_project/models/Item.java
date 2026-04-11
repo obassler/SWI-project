@@ -21,10 +21,10 @@ public class Item {
     @Column(name = "Name", nullable = false, length = 25)
     private String name;
 
-    @NotBlank
-    @Size(max = 25)
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(name = "Type", nullable = false, length = 25)
-    private String type;
+    private ItemType type;
 
     @Size(max = 200)
     @Column(name = "Description", nullable = false, length = 200)
@@ -79,18 +79,18 @@ public class Item {
     private int charismaBonus;
 
     public boolean isWeapon() {
-        return "WEAPON".equalsIgnoreCase(type);
+        return type == ItemType.WEAPON;
     }
 
     public boolean isArmor() {
-        return "ARMOR".equalsIgnoreCase(type) || "SHIELD".equalsIgnoreCase(type);
+        return type == ItemType.ARMOR || type == ItemType.SHIELD;
     }
 
     public boolean isEquippable() {
         return isWeapon() || isArmor() ||
-                "RING".equalsIgnoreCase(type) ||
-                "AMULET".equalsIgnoreCase(type) ||
-                "CLOTHING".equalsIgnoreCase(type);
+                type == ItemType.RING ||
+                type == ItemType.AMULET ||
+                type == ItemType.CLOTHING;
     }
 
     public void equip() {

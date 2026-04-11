@@ -91,7 +91,7 @@ export default function CharacterDetail() {
             setSelectedSpellId('');
             await fetchCharacter();
         } catch (err) {
-            console.error('Failed to assign spell:', err);
+            alert("Failed to assign spell: " + (err.message || 'Unknown error'));
         }
     };
 
@@ -100,7 +100,7 @@ export default function CharacterDetail() {
             await api.removeItemFromCharacter(character.id, itemId);
             await fetchCharacter();
         } catch (err) {
-            console.error("Failed to remove item:", err);
+            alert("Failed to remove item: " + (err.message || 'Unknown error'));
         }
     };
 
@@ -109,12 +109,12 @@ export default function CharacterDetail() {
             await api.removeSpellFromCharacter(character.id, spellId);
             await fetchCharacter();
         } catch (err) {
-            console.error("Failed to remove spell:", err);
+            alert("Failed to remove spell: " + (err.message || 'Unknown error'));
         }
     };
 
     const handleStatusChange = (status) => {
-        if (status === 'Dead') {
+        if (status === 'DECEASED') {
             setCharacter(prevState => ({ ...prevState, status, currentHp: 0 }));
         } else {
             setCharacter(prevState => ({ ...prevState, status }));
@@ -244,8 +244,10 @@ export default function CharacterDetail() {
                                 onChange={(e) => handleStatusChange(e.target.value)}
                                 className="p-2 bg-gray-600 text-white rounded w-full"
                             >
-                                <option value="Alive">Alive</option>
-                                <option value="Dead">Dead</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="REVIVED">Revived</option>
+                                <option value="DECEASED">Deceased</option>
                             </select>
                         ) : (
                             <p className="text-gray-300">Status: {character.status}</p>

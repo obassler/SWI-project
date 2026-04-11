@@ -67,7 +67,7 @@ export default function Dashboard() {
             try {
                 const [charData, locData, questData] = await Promise.all([
                     api.getCharacters(),
-                    api.getLocation(),
+                    api.getLocations(),
                     api.getQuests()
                 ]);
                 setCharacters(charData);
@@ -359,7 +359,7 @@ export default function Dashboard() {
                         <div className="space-y-3">
                             {selectedCharacters.map((char) => {
                                 const bonuses = getEquippedBonuses(char);
-                                const isDead = char.currentHp === 0 || char.status === 'Dead';
+                                const isDead = char.currentHp === 0 || char.status === 'DECEASED';
                                 return (
                                     <div key={char.id} className={`bg-gray-800 p-3 rounded ${isDead ? 'opacity-60' : ''}`}>
                                         <div className="flex justify-between items-start mb-1">

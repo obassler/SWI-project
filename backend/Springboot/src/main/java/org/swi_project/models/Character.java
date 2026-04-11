@@ -77,10 +77,10 @@ public class Character {
     @Column(name = "Charisma", nullable = false)
     private int charisma;
 
-    @NotBlank
-    @Size(max = 25)
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status", nullable = false, length = 25)
-    private String status;
+    private CharacterStatus status;
 
     @Size(max = 200)
     @Column(name = "Background", nullable = false, length = 200)
@@ -98,7 +98,7 @@ public class Character {
     @Column(name = "Notes", nullable = false, length = 2000)
     private String notes;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "charspells",
             joinColumns = @JoinColumn(name = "Character_Id"),
@@ -107,15 +107,16 @@ public class Character {
     @JsonIgnoreProperties("characters")
     private List<Spell> spells = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "charitems",
             joinColumns = @JoinColumn(name = "Character_Id"),
             inverseJoinColumns = @JoinColumn(name = "Item_Id")
     )
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private List<Item> items = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "charquest",
             joinColumns = @JoinColumn(name = "Character_Id"),
@@ -124,7 +125,7 @@ public class Character {
     @JsonIgnoreProperties({"participants"})
     private List<Quest> quests = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "ownedmonsterbychar",
             joinColumns = @JoinColumn(name = "Character_Id"),

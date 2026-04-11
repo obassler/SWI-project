@@ -1,7 +1,4 @@
-const API_BASE_URL =
-    typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL
-        ? import.meta.env.VITE_API_BASE_URL
-        : process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 
 const getAuthToken = () => localStorage.getItem('token');
 
@@ -130,10 +127,6 @@ export const api = {
     deleteCharacter: (id) => fetchApi(`/characters/${id}`, {
         method: 'DELETE'
     }),
-    healCharacter: (id) => fetchApi(`/characters/${id}/heal`, {
-        method: 'PUT'
-    }),
-
     healParty: (characterIds) => fetchApi('/characters/heal-batch', {
         method: 'PUT',
         body: JSON.stringify(characterIds)
@@ -160,7 +153,6 @@ export const api = {
         }),
 
     getItems: () => fetchApi('/items'),
-    getItem: (id) => fetchApi(`/items/${id}`),
     createItem: (item) => fetchApi('/items', {
         method: 'POST',
         body: JSON.stringify(item)
@@ -172,7 +164,6 @@ export const api = {
     deleteItem: (id) => fetchApi(`/items/${id}`, { method: 'DELETE' }),
 
     getSpells: () => fetchApi('/spells'),
-    getSpell: (id) => fetchApi(`/spells/${id}`),
     createSpell: (spell) => fetchApi('/spells', {
         method: 'POST',
         body: JSON.stringify(spell)
@@ -195,7 +186,6 @@ export const api = {
         fetchApi(`/characters/${characterId}/spells/${spellId}`, { method: 'DELETE' }),
 
     getMonsters: () => fetchApi('/monsters'),
-    getMonster: (id) => fetchApi(`/monsters/${id}`),
     createMonster: (monster) => fetchApi('/monsters', {
         method: 'POST',
         body: JSON.stringify(monster)
@@ -207,7 +197,6 @@ export const api = {
     deleteMonster: (id) => fetchApi(`/monsters/${id}`, { method: 'DELETE' }),
 
     getNpcs: () => fetchApi('/npcs'),
-    getNpc: (id) => fetchApi(`/npcs/${id}`),
     createNpc: (npc) => fetchApi('/npcs', {
         method: 'POST',
         body: JSON.stringify(npc)
@@ -218,7 +207,7 @@ export const api = {
     }),
     deleteNpc: (id) => fetchApi(`/npcs/${id}`, { method: 'DELETE' }),
 
-    getLocation: () => fetchApi('/locations'),
+    getLocations: () => fetchApi('/locations'),
     createLocation: (location) => fetchApi('/locations', {
         method: 'POST',
         body: JSON.stringify(location)
@@ -230,7 +219,6 @@ export const api = {
     deleteLocation: (id) => fetchApi(`/locations/${id}`, { method: 'DELETE' }),
 
     getQuests: () => fetchApi('/quests'),
-    getQuest: (id) => fetchApi(`/quests/${id}`),
     addQuest: (quest) => fetchApi('/quests', {
         method: 'POST',
         body: JSON.stringify(quest)

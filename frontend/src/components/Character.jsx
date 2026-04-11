@@ -25,7 +25,7 @@ export default function CharacterManager() {
         characterClass: 'BARBARIAN',
         currentHp: 10,
         maxHp: 10,
-        status: 'Alive',
+        status: 'ACTIVE',
         strength: 10,
         dexterity: 10,
         constitution: 10,
@@ -83,7 +83,7 @@ export default function CharacterManager() {
             characterClass: char.characterClass?.name || 'BARBARIAN',
             currentHp: char.currentHp || 10,
             maxHp: char.maxHp || 10,
-            status: char.status || 'Alive',
+            status: char.status || 'ACTIVE',
             strength: char.strength || 10,
             dexterity: char.dexterity || 10,
             constitution: char.constitution || 10,
@@ -112,7 +112,7 @@ export default function CharacterManager() {
             characterClass: 'BARBARIAN',
             currentHp: 10,
             maxHp: 10,
-            status: 'Alive',
+            status: 'ACTIVE',
             strength: 10,
             dexterity: 10,
             constitution: 10,
@@ -221,7 +221,7 @@ export default function CharacterManager() {
     };
 
     const handleStatusChange = (status) => {
-        if (status === 'Dead') {
+        if (status === 'DECEASED') {
             setForm(prev => ({...prev, status, currentHp: 0}));
         } else {
             setForm(prev => ({...prev, status}));
@@ -323,10 +323,10 @@ export default function CharacterManager() {
                                 onChange={(e) => handleStatusChange(e.target.value)}
                                 className="w-full rounded bg-gray-600 p-2 text-white"
                             >
-                                <option>Alive</option>
-                                <option>Dead</option>
-                                <option>Injured</option>
-                                <option>Unconscious</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="REVIVED">Revived</option>
+                                <option value="DECEASED">Deceased</option>
                             </select>
                         </div>
                         <div>

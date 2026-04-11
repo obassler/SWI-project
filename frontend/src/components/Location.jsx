@@ -21,7 +21,7 @@ export default function Location() {
         setLoading(true);
         try {
             const [locs, mons, npcList] = await Promise.all([
-                api.getLocation(), api.getMonsters(), api.getNpcs()
+                api.getLocations(), api.getMonsters(), api.getNpcs()
             ]);
             setLocations(locs);
             setMonsters(mons);
@@ -115,6 +115,16 @@ export default function Location() {
             handleCancel();
         } catch (err) {
             setError('Failed to add location');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this location?')) return;
+        try {
+            await api.deleteLocation(id);
+            await fetchData();
+        } catch (err) {
+            setError('Failed to delete location');
         }
     };
 
@@ -224,6 +234,7 @@ export default function Location() {
                                 </div>
                                 <div className="flex gap-3 text-lg">
                                     <button onClick={() => handleEditClick(location)} className="text-green-400 hover:text-green-600">✎</button>
+                                    <button onClick={() => handleDelete(location.id)} className="text-red-400 hover:text-red-600">✕</button>
                                 </div>
                             </div>
                         )}

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.swi_project.exception.ResourceNotFoundException;
 import org.swi_project.models.Character;
+import org.swi_project.models.CharacterStatus;
 import org.swi_project.models.Item;
 import org.swi_project.models.Spell;
 import org.swi_project.repositories.CharacterRepository;
@@ -80,7 +81,7 @@ public class CharacterController {
         Character character = characterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Character", id));
         character.setCurrentHp(character.getMaxHp());
-        character.setStatus("Alive");
+        character.setStatus(CharacterStatus.ACTIVE);
         return ResponseEntity.ok(characterRepository.save(character));
     }
 
@@ -92,7 +93,7 @@ public class CharacterController {
         int newHp = Math.max(0, character.getCurrentHp() - amount);
         character.setCurrentHp(newHp);
         if (newHp == 0) {
-            character.setStatus("Dead");
+            character.setStatus(CharacterStatus.DECEASED);
         }
         return ResponseEntity.ok(characterRepository.save(character));
     }
@@ -104,8 +105,8 @@ public class CharacterController {
                 .orElseThrow(() -> new ResourceNotFoundException("Character", id));
         int newHp = Math.min(character.getMaxHp(), character.getCurrentHp() + amount);
         character.setCurrentHp(newHp);
-        if ("Dead".equalsIgnoreCase(character.getStatus()) && newHp > 0) {
-            character.setStatus("Alive");
+        if (character.getStatus() == CharacterStatus.DECEASED && newHp > 0) {
+            character.setStatus(CharacterStatus.ACTIVE);
         }
         return ResponseEntity.ok(characterRepository.save(character));
     }
@@ -116,7 +117,7 @@ public class CharacterController {
         List<Character> characters = characterRepository.findAllById(characterIds);
         for (Character character : characters) {
             character.setCurrentHp(character.getMaxHp());
-            character.setStatus("Alive");
+            character.setStatus(CharacterStatus.ACTIVE);
         }
         return ResponseEntity.ok(characterRepository.saveAll(characters));
     }
@@ -147,13 +148,13 @@ public class CharacterController {
 
         long weapons = character.getItems().stream().filter(Item::isWeapon).count();
         long rings = character.getItems().stream()
-                .filter(i -> "RING".equalsIgnoreCase(i.getType())).count();
+                .filter(i -> i.getType() == org.swi_project.models.ItemType.RING).count();
 
         if (item.isWeapon() && weapons >= 2) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Character can't carry more than 2 weapons."));
         }
-        if ("RING".equalsIgnoreCase(item.getType()) && rings >= 4) {
+        if (item.getType() == org.swi_project.models.ItemType.RING && rings >= 4) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Character can't wear more than 4 rings."));
         }
