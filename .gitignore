@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+target/
+build/
+dist/
+
+# Environment
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+db.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,138 +1,128 @@
-## Project Overview
+# D&D Campaign Manager (SWI project)
 
-This project is a comprehensive RPG management platform consisting of a Spring Boot backend and a React frontend. It allows users to manage characters, items, monsters, locations, quests, and story content, providing a GM control panel for combat encounters and world-building.
+A full-stack web app for game masters running a Dungeons & Dragons campaign: manage characters, NPCs, monsters, items, spells, locations and quests in one place, and track combat state (HP, conditions, death saves, spell slots) during a session.
+
+![Java](https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3-6DB33F?logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![Tailwind](https://img.shields.io/badge/Tailwind-CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+> University project for the *Software Engineering (SWI)* course, University of Ostrava.
 
 ## Features
 
-* **Character Management**: Create, edit, delete, and view detailed character profiles including stats, inventory, spells, and notes.
-* **Item Management**: Define and equip items with dynamic properties based on type (weapons, armor, potions, etc.), including magical properties, damage, armor class, and more.
-* **Bestiary**: Add, edit, and delete monsters and bosses with stats and loot.
-* **Locations**: Manage locations with descriptions, assign monsters/NPCs, and edit world settings.
-* **Combat Encounter**: Quick access to monsters in the current location for GM-managed combat.
-* **Story Editor**: Write and save narrative content and manage quests.
-* **Map Tokens**: Drag, drop, zoom, and save token positions on an interactive map.
-* **Pagination & Navigation**: Paginate character lists, navigate between screens, and use quick actions like dice rolling.
-* **Docker Setup**: Ready-to-use Docker Compose for backend, frontend, and MySQL.
-
-## Tech Stack
-
-* **Backend**: Spring Boot 3, Hibernate, Spring Data JPA, Spring Security, MySQL
-* **Frontend**: React, Tailwind CSS, React Router, react-zoom-pan-pinch, react-draggable
-* **Database**: MySQL 8.0
-* **Containerization**: Docker, Docker Compose
-* **Build Tools**: Maven (backend), npm (frontend)
+- **Authentication** – registration and login with JWT; all API routes except `/api/auth/**` require a token.
+- **Characters** – full character sheets with class, race, inventory and spells; equip items, take damage, heal (single or whole party), death saves, conditions and spell-slot tracking.
+- **NPCs & Bestiary** – create and manage NPCs and monsters with stats.
+- **Items & Spells** – catalogues that can be assigned to characters.
+- **Locations** – world locations with descriptions.
+- **Quests** – quests with participating characters and completion tracking.
+- **UI** – dashboard, sidebar navigation, search and sorting, loading and error states.
 
 ## Architecture
 
 ```
-Client (React) <--> Spring Boot API <--> MySQL Database
+React (frontend/)  ──REST + JWT──▶  Spring Boot API (backend/Springboot)  ──JPA──▶  MySQL 8
+                                     Django service (backend/Django_AI) – placeholder for planned AI features
 ```
 
-* **REST API**: Exposes endpoints under `/api/*` for characters, items, monsters, locations, map tokens, story, and quests.
-* **Entities**: Defined using JPA: Character, CharacterClass, Race, Item, Monster, Location, Quest, Spell.
-* **Frontend Routes**: Uses React Router to navigate between Dashboard, Character list/detail, Item list/form, Bestiary, Locations, Story Editor, Map.
+| Part | Tech |
+|---|---|
+| Backend | Spring Boot 3, Spring Data JPA / Hibernate, Spring Security, JWT, Maven |
+| Frontend | React 18, React Router, Tailwind CSS, Jest + Testing Library |
+| Database | MySQL 8 (Docker Compose) |
+| AI service | Django – currently only a health-check endpoint, AI features are planned |
 
 ## Getting Started
 
 ### Prerequisites
 
-* Java 17
-* Node.js 16+
-* Docker & Docker Compose
+- Java 17+, Maven
+- Node.js 18+
+- Docker (for the database)
 
-### Running Locally
+### 1. Database
 
-1. **Clone the repo**:
-
-   ```bash
-   git clone https://github.com/your-repo/rpg-manager.git
-   cd rpg-manager
-   ```
-
-2. **Docker Compose**:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-   * MySQL runs on port `3306`
-   * Backend runs on port `8080`
-   * Frontend runs on port `80`
-
-3. **Without Docker**:
-
-   * **Backend**:
-
-     ```bash
-     cd backend/Springboot
-     mvn clean package
-     java -jar target/Springboot-1.0-SNAPSHOT.jar
-     ```
-   * **Frontend**:
-
-     ```bash
-     cd frontend
-     npm install
-     npm run start
-     ```
-
-## API Endpoints
-
-| Method | Path                   | Description               |
-| ------ | ---------------------- | ------------------------- |
-| GET    | `/api/characters`      | List all characters       |
-| GET    | `/api/characters/{id}` | Get character by ID       |
-| POST   | `/api/characters`      | Create new character      |
-| PUT    | `/api/characters/{id}` | Update existing character |
-| DELETE | `/api/characters/{id}` | Delete character          |
-| GET    | `/api/items`           | List all items            |
-| POST   | `/api/items`           | Create new item           |
-| PUT    | `/api/items/{id}`      | Update existing item      |
-| DELETE | `/api/items/{id}`      | Delete item               |
-| GET    | `/api/monsters`        | List monsters             |
-| POST   | `/api/monsters`        | Add monster               |
-| PUT    | `/api/monsters/{id}`   | Update monster            |
-| DELETE | `/api/monsters/{id}`   | Remove monster            |
-| GET    | `/api/locations`       | List locations            |
-| POST   | `/api/locations`       | Create location           |
-| PUT    | `/api/locations/{id}`  | Update location           |
-| DELETE | `/api/locations/{id}`  | Delete location           |
-| GET    | `/api/story`           | Get story text            |
-| PUT    | `/api/story`           | Update story              |
-| GET    | `/api/quests`          | List quests               |
-| POST   | `/api/quests`          | Add quest                 |
-| DELETE | `/api/quests/{id}`     | Remove quest              |
-| GET    | `/api/map/tokens`      | Get map tokens            |
-| PUT    | `/api/map/tokens/{id}` | Update token position     |
-
-## Frontend Structure
-
-```
-/src
-├── api.js            # API client wrapper
-├── components
-│   ├── Dashboard.jsx
-│   ├── CharacterDetail.jsx
-│   ├── CharacterForm.jsx
-│   ├── Items.jsx
-│   ├── ItemForm.jsx
-│   ├── Bestiary.jsx
-│   ├── MonsterForm.jsx
-│   ├── Location.jsx
-│   ├── LocationForm.jsx
-│   ├── Quests.jsx
-│   └── Map.jsx
-└── App.jsx           # React Router setup
+```bash
+cd backend
+docker compose up -d        # MySQL on localhost:3306
 ```
 
-## Contributing
+### 2. Backend
 
-1. Fork this repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m "Add new feature"`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
+```bash
+cd backend/Springboot
+cp .env.example .env        # set DB credentials and JWT_SECRET
+mvn spring-boot:run         # API on http://localhost:8080
+```
+
+All settings are read from environment variables (see [`.env.example`](backend/Springboot/.env.example)); profiles `dev` and `prod` are available via `SPRING_PROFILES_ACTIVE`.
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+npm start                   # http://localhost:3000
+```
+
+### 4. (Optional) AI service
+
+```bash
+cd backend/Django_AI
+pip install django
+export DJANGO_SECRET_KEY=change-me
+python manage.py runserver  # http://localhost:8000/health/
+```
+
+## API Overview
+
+All endpoints are under `/api`. Standard CRUD (`GET` list, `GET /{id}`, `POST`, `PUT /{id}`, `DELETE /{id}`) exists for:
+`characters`, `items`, `monsters`, `npcs`, `spells`, `locations`, `quests`. Read-only lists: `classes`, `races`.
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Log in, returns JWT |
+| GET | `/api/auth/validate` | Validate token |
+| PUT | `/api/characters/{id}/damage` | Apply damage |
+| PUT | `/api/characters/{id}/heal` · `/heal-amount` | Full / partial heal |
+| PUT | `/api/characters/heal-batch` | Heal several characters at once |
+| POST | `/api/characters/{id}/death-save` | Roll a death saving throw |
+| PUT | `/api/characters/{id}/conditions` | Set conditions |
+| PUT | `/api/characters/{id}/spell-slots` | Update spell slots |
+| POST / DELETE | `/api/characters/{id}/items/{itemId}` | Add / remove item |
+| POST | `/api/characters/{id}/equip` | Equip item |
+| POST / DELETE | `/api/characters/{id}/spells/{spellId}` | Learn / forget spell |
+| GET | `/api/quests/{id}/participants` | Quest participants |
+| POST / DELETE | `/api/quests/{id}/participants/{characterId}` | Add / remove participant |
+| PUT | `/api/quests/{id}/complete` | Complete quest |
+
+## Project Structure
+
+```
+SWI-project/
+├── backend/
+│   ├── docker-compose.yml         # MySQL
+│   ├── Springboot/                # REST API
+│   │   └── src/main/java/org/swi_project/
+│   │       ├── controllers/  models/  repositories/
+│   │       ├── DTO/  security/  config/  exception/
+│   └── Django_AI/                 # AI service (placeholder)
+└── frontend/
+    └── src/
+        ├── App.jsx                # routes
+        ├── api.js                 # API client
+        ├── dndUtils.js            # D&D rules helpers (XP, modifiers…)
+        └── components/            # Dashboard, Character, Bestiary, Items, Spells, NPCs, Quests, Location…
+```
+
+## Author
+
+**Ondřej Bassler** – [github.com/obassler](https://github.com/obassler)
 
 ## License
 
-This project is licensed under the MIT License. Feel free to use and modify.
+MIT
